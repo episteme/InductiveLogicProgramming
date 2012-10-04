@@ -416,4 +416,4 @@ clausal logic was developed by wim van laer for use in the nonmonotonic
 setting of claudien.
 the definitions of the propertires of generalization operators (for 0
     subsumption and single clauses) can be derived from those of refinement
-operators
+operators.
