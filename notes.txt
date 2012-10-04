@@ -1,0 +1,408 @@
+Inductive  Logic  Programming
+Stephen  MUGGLETON 
+Received 30  November  1990 
+New Generation Computing,  8 (1991)  295-318 
+OHMSHA, LTD.  and  Springer-Verlag 
+
+3.1 Generality (pg 301)
+Def 1. Formula A is more general than formula B if and only if A |= B and B |/= A.
+(A entails B and B does not entail A: every model in which A is true, B is also true. Not every model where B is true is A also true)
+
+Relative generality:
+pg (302) Formula A is more general than formula B relative to formula C if and only if C /\ A |= B and C /\ B |/=A
+
+Def 3. Formula A is logically equivalent to formula B if and only if A |= B and B |= A. This definition suggests general purpose methods for finding redundancy within formulae.
+
+Def 4. Clause C is redundant within logic program P /\ C if and only if P /\ C is logically equivalent to P.
+
+Logic programs can be reduced by removing all redundant clauses using theorem proving.
+
+Def 5. Literal l is logically redundancy within the clause C \/ l in the logic program P /\ (C \/ l) if and only if P /\ (C \/ l) is logically equivalent to P /\ C.
+
+pg(302)
+L_O is the language of observations
+L_B is the language of background knowledge
+L_H is the language of hypothesis
+
+The general inductive problem is as follows (pg 303):
+Given a consistent set of examples of observations O (subset of) L_O and consistent background knowledge B (subset of) L_B) find an hypothesis H (member of) L_H such that
+B /\ H |- O (O is derivable from B /\ H).
+
+pg 303: L_O is usually required to contain only ground literals. How do we restrict L_H?
+
+pg 303: PAC-learning not suitable?
+pg 304: Arguments for PAC-learning?
+
+Inductive Logic Programming: Theory and methods
+* Stephen Muggletn
+* Luc de Raedt
+
+Abs: ILP is the discipline which investigates the inductive construction of
+first-order clausal theories from examples and background knowledge.
+Intro: ILP has been defined as the intersection of inductive learning and
+logic programming. Thus, ILP employs different techniques from both machine
+learning and logic programming. ILP inherits its goal from inductive machine
+learning; to develop tools and techniques to induce hypotheses from
+observations and to synthesize new knowledge from experience. Since
+computational logic is the representation mechanism for hypotheses and
+observations, ILP can overcome the two main limitations of classical machine
+learning techniques, such as Top-Down-Induction-of-Decision-Tree (TDIDT)
+  family:
+  1. the use of a limited knowledge representation formalism (propositional
+      logic)
+  2. difficulties in using substantial background knowledge in the learning
+  process.
+  The first problem is important because many domains of expertise can only be
+  expressed in FOL (or a variant of) and not in propositional logic.
+(inductive learning is learning by example; inducing a general rule from a set
+ of observed instances)
+The second problem is important because it has been shown that the use of
+domain knowledge is essential for achieving intelligent behaviour.
+ILP is interested in properties of inference rules, in convergence of
+algorithms and in the computational complexity of procedures.
+ILP can benefit from using computational logic and potentially benefit be
+derived from making use of work on termination, types and modes,
+         knowledge-base updating, algorithmic debugging, abduction.
+
+Inductive inference examples
+B =
+grandfather(X,Y) <- father(X,Z), parent(Z,Y)
+father(henry,jane) <-
+mother(jane, john) <-
+mother(jane, alice) <-
+now we are given positive examples
+E+ =
+grandfather(henry,john) <-
+grandfather(henry,alice) <-
+and negative examples:
+E- =
+<- grandfather(john,henry)
+<- grandfather(alice,john)
+so might guess:
+H = parent(X,Y) <- mother(X,Y)
+note that H is not a consequence of B and E-:
+B /\ E- |/= F (prior satisfiability)
+however, H allows us to explain E+ relative to B:
+B /\ H |= E+ (posterior sufficiency)
+B and H are consistent with E-:
+B /\ H /\ E- |/= F
+question is: how do we derive H?
+
+example 2:
+B =
+haswings(X) <- bird(X)
+hasbeak(X) <- bird(X)
+bird(X) <- vulture(X)
+carnivore(X) <- vulture(X)
+now a new bird is discovered:
+E+ =
+haswings(tweety) <-
+hasbeak(tweety) <-
+now it might be possible to say
+H = bird(tweety) <-
+this may be called a working hypothesis, it could be refuted with more
+evidence
+but H allows us to explain E relative to B:
+B /\ H |= E+
+a more unlikely hypothesis might be
+H' = vulture(tweety) <-
+how do we know H' is more speculative than H?
+
+2.5
+Induction = Abduction + Justification
+
+Abduction is the process of hypothesis formation, the term is used to denote a
+form of nonmonotonic reasoning, meaning that a new piece of information can
+reduce the set of known facts. This allows for working hypothesis to be used
+and removed when they are proved wrong. Pierce describes the basis of
+abduction as follows: given E and E <- H, hypothesize H.
+Justification is the degree of belief ascribed to a hypothesis given a certain
+amount of evidence.
+
+3. model-theory of ILP
+3.1 normal semantics
+given background knowledge B and evidence E (E+ /\ E-), the aim is to then
+find a hypothesis H such that:
+B /\ E- |/= F (prior satisfiability)
+B /\ H /\ E- |/= F (posterior satisfiability)
+B |/= E+ (prior necessity)
+B /\ H |= E+ (posterior sufficiency)
+3.2 definite semantics
+all e in E- are false in M+(B) (prior satisfiability)
+all e in E- are false in M+(B /\ H) (posterior satisfiability)
+some e in E+ are false in M+(B) (prior necessity)
+all e in E+ are true in M+(B /\ H) (posterior sufficiency)
+
+the special case where B and H are definite clauses and E is a set of ground
+unit clauses is called the example setting. the example setting is the main
+setting of ILP. it is employed by the large majority of ILP systems.
+
+3.2 nonmonotonic semantics
+in the nonmonotonic setting of ILP, the background theory is a set of definite
+clauses, the evidence is empty and the hypotheses are sets of general clauses
+expressible using the same alphabet as the background theory. the reason that
+the evidence is empty is that the same positive evidence is considered part of
+the background theory and the negative evidence is derived implicitly, by
+making a kind of closed world assumption.
+
+3.3 nonomontonic semantics
+validity: all h in H are true in M+(B)
+completeness: if general clause g is true in M+(B), then H |= g
+minimality: there is no proper subset G of H which is valid and complete
+
+validity requirement assures that all clauses belonging to a hypothesis hold
+in the database B (that they are true properties of the data). the
+completeness requirement states that all information that is valid in the
+database should be encoded in the hypothesis. the minimality requirement aims
+are deriving nonredundant hypotheses.
+
+example in nonmonotonic setting:
+B =
+male(luc) <-
+female(lieve) <-
+human(lieve) <-
+human(luc) <-
+
+a possible solution is then:
+H = 
+<- female(X), male(X)
+human(X) <- male(X)
+human(x) <- female(x)
+female(X), male(X) <- human(X)
+
+to explain the differences between the example setting and the nonmonotonic
+setting, let us consider:
+B =
+bird(tweety) <-
+bird(oliver) <-
+E+ =
+flies(tweety) <-
+ 
+an acceptable hypothesis H1 in the example setting would be flies(X) <-
+bird(X). notice that this clauses realises an inductive leap as flies(oliver)
+is true M+(B1 /\ H1). however, H1 is not a solution in the nonmonotonic setting
+as there exists a substition 0 = {X <- oliver} which makes the clauses false
+in M+(B /\ E+). this demonstrates that the nonmonotonic setting hypothesizes
+only proporties that hold in the database. therefore, the nonmonotonic
+semantics realizes induction by deduction. deduction is deriving specific
+examples from general propositions, induction is deriving general propositions
+from examples. in the nonmonotonic setting hypothesis H that are deduced from
+the set of observed examples E and the background theory B, hold for all
+possible sets of examples, this produces generalization beyond the
+observations. as a consequence, properties derived in the nonmonotonic setting
+are more conservative than those derived in the normal setting. in most
+applications of the example setting in ILP, only the set of positive examples
+is specified, and the set of negative examples is derived from this by
+applying the closed world assumption, i.e by taking E- = M-(B /\ E). this
+results in E- = (flies(oliver)). with this new E-, H1 cannot contribute to a
+solution in the normal setting.
+~more on differences and similarities~
+
+4. generic ilp algorithm
+ILP algorithm based on GENCOL.
+the first observation leading towards a generic ILP algorithm is to regard ILP
+as a search problem. this view of ILP follows immediately from the model-theory
+of ILP. in ILP there is a space of candidate solutions, i.e the set of well
+formed hypotheses, and an acceptable criterion characterizing solutions to an
+ILP problem. therefore one can solve ILP using a naive generate and test
+algorithm. this approach is known as the enumeration algorithm, but this is
+too expensive to be of practical interest. therefore the question arises of
+how the space of possible solutions can be structured in order to allow for
+pruning of the search. in concept-learning and ILP, the search space if
+typically structured by means of the dual notions of generalization and
+specilization.
+in our view, generalization corresponds to induction and specilization
+corresponds to deduction, implyinf that deduction is viewed as the reverse of
+deduction.
+
+def 4.1
+A hypothesis G is more general than hypothesis S if and only if G |= S. S is
+also said to be more specific than G.
+
+in search algorithms, the notions of generalization and specialization are
+incorporated using inductive and deductive inference rules:
+
+def 4.2
+A deductive inference rule r in R maps a conjuction of clauses G onto a
+conjunction of clauses S such that G |= S; r is called a specialization rule.
+
+As an example of deductive inference rule, consider resolution. Also,
+   dropping a clause from a hypothesis realizes specialization.
+
+def 4.3
+An inductive inference rule r in R maps a conjunction of clauses S onto a
+conjunction of clauses G such that G |= S; r is called a generalisation rule.
+
+An example of an inductive inference rule is Absorption:
+Absorption: 
+p <- A, B   q <- A
+------------------
+P <- q, B   q <- A
+in the rule of absorption, the conclusion entails the condition. notice that
+applying the rule of absorption in the reverse direction is a deductive
+inference rule. other inductive inference rules generalise by adding a clause
+to a hypothesis, or by dropping a negative literal from a clause. inductive
+inference rules are clearly not sound. the soundness problem can be
+circumvented by associating each hypothesized conclusion H with a label L =
+p(H|B /\ E) where L is the probability that H holds given the background
+knowledge B and evidence E hold.
+Generalization and specialization form the basis for pruning the search space.
+This is because:
+When B /\ H |/= e, where B is the background theory, H is the hypothesis, and
+e is positive evidence, then none of the specializations H' of H will imply the
+evidence. each such hypothesis will be assigned a probability label 
+p(H'| B /\ E) = 0. they can therefore be pruned from the search. 
+When B /\ H /\ e |= F, where B is background theory, H is the hypothesis, and
+e is negative evidence, then all the generalizations H' of H will also be
+inconsistent with B /\ E. These will again have p(H'|B /\ E) = 0.
+
+Algorithm 4.1
+QH := Initialize
+repeat
+  Delete H from QH
+  Choose the inference rules r1..rk in R to be applied to H
+  Apply the rules r1..rk to H to yield H1..Hn
+  Add H1..Hn to QH
+  Prune Qh
+until stop-criterion(QH) satisfied
+
+The algorithm works as follows. It keeps track of a queue of candidate
+hypotheses QH. It repeatedly deletes a hypothesis H from the queue and expands
+the hypothesis using inference rules. the expanded hypothesis are then added
+to the queue of hypotheses QH, which may be pruned to discard unpromising
+hypothesis from further consideration. this process continues until the
+stop-criterion is satisfied.
+
+in 4.1:
+initialize denotes the hypotheses started from.
+R denotes the set of inference rules applied.
+delete influences the search strategy. using different instantiations of this
+procedure, one can realize a depth-first, breadth-first or best-first
+algorithm.
+choose determines the inference rules to be applied on the hypothesis H.
+prune determines which hypothesis are to be deleted from the queue. this is
+usually realized using (probabilities) of the hypotheses on QH or relying on
+the user. combining the delete with prune, it is easy to obtain advanced
+search strategies such as hill-climbing, beam-search, best-first.
+the stop-criterion states the conditions under which the algorithm stops. some
+frequently employed criteria require that a solution be found, or that it is
+unlikely that an adequate hypothesis can be obtained from the current queue.
+
+the above algorithm searches for solutions at the hypothesis level rather than
+at the clause level, as done by several algorithms such as FOIL and GOLEM. we
+are using a more general approach.
+DUCE and CIGOL algorithms realise a hill-climbing search strategy. at the time
+delete is invoked, the queue always contains a single hypothesis. initially,
+this hypothesis is B /\ E+. the inference rules are based on inverting
+resolution and include the absorption rule. in the pruning phase, only the
+best hypothesis is kept; the others are discarded from the queue QH. pruning
+is realized using a mixture of the minimal description length principle and
+relying on the user to decide whether a clause is true in the intended model
+or not.
+
+DUCE and CIGOL are representatives of the class of 'specific-to-general'
+systems. these systems start from the exaples of background knowledge, and
+repeatedly generalize their hypothesis by applying inductive inference rules.
+during the search, they take care that the hypothesis remains satisfiable
+(that it does not imply negative examples). other representatives of this
+class include ITOU, CLINT, MARVIN, GOLEM, PGA.
+
+the dual class of systems, which searches 'general-to-specific' starts with
+the most general hypothesis (i.e, the inconsistent clause) and repeatedly
+specializes the hypothesis by applying deductive inference rules in order
+to remove inconsistencies with the negative examples. during the search, care
+is taken that the hypotheses remains satisfiable (does not imply negative
+    examples). other representations of this class include FOIL, CLAUDIEN,
+   MIS, MOBAL, GRENDEL and ML-SMART.
+
+the same search strategies are also valid in the nonmonotonic setting. in the
+nonmonotonic setting, one is interested in the boundary of maximally general
+hypotheses, true in the minimal model. above the boundary, the hypotheses will
+be false, and below the boundary, they will either be false or nonmaximal, to
+locate the boundary, one can search again specific-to-general or
+general-to-specific.
+
+5. proof-theory of ILP
+given the formulas B /\ H |/= E+, deriving E+ from B /\ H is deduction, and
+deriving H from B and E+ is induction. inference rules can be obtained by
+inverting deductive ones. since there are different assumptions about the
+deductive rule for |= and the format of background theory B and evidence E+,
+different models of inductive inference are obtained.
+in 0-subsumption, the background knowledge is supposed to be empty, and the
+deductive inference rule corresponds to 0-subsumption among single clauses.
+since the deductive inference rule corresponds to 0-subsumption is incomplete
+with regard to implication among clauses, extension of inductive inference
+under 0-subsumption have been recently studied under the header 'inverting
+implication'. extensions of 0-subsumption that take into account background
+knowledge are studied in section 5.3. the most attractive but most complicated
+framework for inductive inference is studied in section 5.4 this framework
+takes into account background knowledge and aims are inverting the resolution
+principle, the best known deductive inference rule.
+
+5.1 rules of inductive inference and operators
+a well known problem in AI is that the unrestricted application of inference
+rules results in combinatorial exploisions, to control the application of
+inference rules, artificial intelligence employs 'operators' that expand a
+given node in the search tree into a set of successor nodes in the search.
+this, together with the above properties of generalization and specialization
+discussed earlier, motivates the introduction of specialization and
+generalization operators.
+
+def 5.1
+a specialization operator maps a conjunction of clauses G onto a set of
+maximal specializations of S. A maximal specialization S of G is a
+specialization of G such that G is not a specialization of S, and there is no
+specialization of G such that S is a specialization of S'.
+
+def 5.2
+a generalization operator maps a conjunction of clauses S onto a set of
+minimal generalizations of S. a minimal generalization G or S is a
+generalization of S such that S is not a generalization of G and there is no
+generalization G' such that G is a generalization of G'.
+
+5.2 0-subsumption
+
+0-subsumption is the simplest model of deduction for ILP.
+
+Def 5.3 A clause c1 0-subsumes a clause c2 if and only if there exists a
+substitution 0 such that c1 0 subset of c2 . c1 is a generalization of c2
+under 0-subsumption.
+
+0-subsumption:
+ c2
+---- where c1 0 subset of c2
+ c1
+
+example of 0-subsumption:
+
+father(X,Y) <- parent(X,Y), male(X)
+  0-subsumes
+father(jef,paul) <- parent(jef, paul), parent(jef,ann), male(jef), female(ann)
+  with 0 = {X = jef, Y = ann}
+
+properties of 0-subsumption:
+implication, infinite descending chains, infinite ascending chains,
+  equivalence, reduction, lattice.
+
+equivalence: there are different clauses that are equivalent under
+0-subsumption. to get around this problem, plotkin defined equivalence classes
+of clauses, and showed that there is a unique representative of each clause,
+   which he named the reduced clause. the reduced clause r of clause c is a
+   minimal subset of literals of c such that r is equivalent to c. ilp systems
+   can get around the problem of equivalence when working with reduced clauses
+   only.
+
+specialization under 0-subsumption
+refinement operators basically employ two operations on a clause:
+1. apply a substitution 0 to the clause.
+2. add a literal (or a set of literals) to the clause
+
+5.4 properties of refinement operators
+global completeness, local completeness, optimality
+
+it is desirable that only reduced clauses are generated by the refinement
+operators; such a refinement operator for full clausal logic was recently
+developed by patrick van der laag. second, to consider all hypotheses,
+operators should be globally complete. third, if a heuristic
+general-to-specific search strategy is employed (as in FOIL), the operator
+should be locally complete.
