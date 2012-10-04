@@ -405,4 +405,15 @@ operators; such a refinement operator for full clausal logic was recently
 developed by patrick van der laag. second, to consider all hypotheses,
 operators should be globally complete. third, if a heuristic
 general-to-specific search strategy is employed (as in FOIL), the operator
-should be locally complete.
+should be locally complete. if the operator is not locally complete, not all
+successors of a node (hypothesis) are considered. on the other hand, if a
+complete search strategy is used (breadth-first or depth first iterative
+deepening), it is desirable that the operator be optimal because they generate
+each candidate clause exactly once. nonoptimal refinement operators generate
+all candidate clauses more than once, getting trapped in recomputing the same
+things again and again. recently, an optimal refinement operator for full
+clausal logic was developed by wim van laer for use in the nonmonotonic
+setting of claudien.
+the definitions of the propertires of generalization operators (for 0
+    subsumption and single clauses) can be derived from those of refinement
+operators
