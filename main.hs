@@ -33,17 +33,19 @@ nEx = [("daughter", ["tom", "ann"]),
        ("daughter", ["eve", "ann"])]
 
 rel = (("daughter", [1, 2]), [("female", [1]), ("parent", [2, 1])])
+rel2 = (("daugther", [1, 2]), [("female", [1])])
 
--- Eventually will return true if relation covers all positive examples
--- and no negative examples.
--- Currently ignores negative examples
+-- Returns true if relation covers all positive examples and none of the negative
+-- examples
 covers :: Relation -> BackKnow -> Examples -> Bool
 covers _ _ ([], _) = True
-covers r b ((e:es), x) | allIn b (arg2cla r e) = covers r b (es, x)
+covers r b (x, (n:ns)) | allIn b (arg2cla r n) == False = covers r b (x, ns)
                        | otherwise = False
+covers r b ((e:es), []) | allIn b (arg2cla r e) = covers r b (es, [])
+                        | otherwise = False
 
 -- allIn x y returns True if y is a subset of x
-allIn :: [Clause] -> [Clause] -> Bool
+allIn :: (Eq a) => [a] -> [a] -> Bool
 allIn b [] = True
 allIn b (x:xs) | x `elem` b = allIn b xs
                | otherwise = False
@@ -73,7 +75,16 @@ useVMap2 v i = useVMap_ v i [] where
                 useVMap_ v [] s = (reverse s)
                 useVMap_ v (i:ix) s = useVMap_ v ix ((getLit v i):s)
 
+-- Returns the list of literals used in the background knowledge
+listLits :: BackKnow -> [Literal]
+listLits [] = []
+listLits b = listLits2 b [] where
+              listLits2 [] s = s
+              listLits2 (x:xs) s = listLits2 xs (addSet (snd x) s)
 
+addSet :: (Eq a) => [a] -> [a] -> [a]
+addSet [] y = y
+addSet (x:xs) y | x `elem` y = addSet xs y
+                | otherwise = addSet xs (x:y)
 
-         
 
