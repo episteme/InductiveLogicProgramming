@@ -26,6 +26,36 @@ backno = [("parent", ["ann", "mary"]),
             ("female", ["mary"]),
             ("female", ["eve"])]
 
+backno2 = [("sibling", ["james", "steve"]),
+        ("sibling", ["steve", "james"]),
+        ("sibling", ["greg", "jess"]),
+        ("sibling", ["jess", "greg"]),
+        ("sibling", ["bob", "mike"]),
+        ("sibling", ["mike", "bob"]),
+        ("parent", ["bob", "james"]),
+        ("parent", ["bob", "steve"]),
+        ("parent", ["jane", "james"]),
+        ("parent", ["jane", "steve"]),
+        ("parent", ["mike", "greg"]),
+        ("parent", ["mike", "jess"]),
+        ("parent", ["sharon", "greg"]),
+        ("parent", ["sharon", "jess"])]
+
+pEx2 = [("cousin", ["james", "greg"]),
+     ("cousin", ["greg", "james"]),
+     ("cousin", ["steve", "greg"]),
+     ("cousin", ["greg", "steve"]),
+     ("cousin", ["jess", "james"]),
+     ("cousin", ["jess", "steve"]),
+     ("cousin", ["james", "jess"]),
+     ("cousin", ["steve", "jess"])]
+
+nEx2 = [("cousin", ["jane", "bob"]),
+     ("cousin", ["greg", "jess"]),
+     ("cousin", ["mike", "sharon"]),
+     ("cousin", ["sharon", "jane"]),
+     ("cousin", ["jane", "jess"])]
+
 pEx = [("daughter", ["mary", "ann"]),
        ("daughter", ["eve", "tom"])]
 
@@ -34,6 +64,7 @@ nEx = [("daughter", ["tom", "ann"]),
 
 rel = (("daughter", [1, 2]), [("female", [1]), ("parent", [2, 1])])
 rel2 = (("daugther", [1, 2]), [("female", [1])])
+rel3 = (("cousin", [1, 2]), [("parent", [1,3]), ("sibling", [3,4]), ("parent", [4,2])])
 
 -- Returns true if relation covers all positive examples and none of the negative
 -- examples
