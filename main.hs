@@ -66,6 +66,7 @@ nEx4 = [(True, "d", ["4"]),
         (True, "d", ["6"])]
 
 rel0 = ((True, "d", [1]), [(False, "a", [1]), (False, "c", [1])])
+rel00 = ((True, "d", [1]), [])
 rel01 = ((True, "d", [1]), [(False, "b", [1])])
 rel02 = ((True, "d", [1]), [(True, "a", [1]), (True, "c", [1])])
 
@@ -80,7 +81,7 @@ pEx2 = [(True, "cousin", ["james", "greg"]),
 
 nEx3 = [(True, "cousin", ["james", "james"]),
         (True, "cousin", ["sharon", "mike"]),
-        (True, "coisin", ["steve", "james"])]
+        (True, "cousin", ["steve", "james"])]
 
 -- cousin (james, greg) <- parent(bob, james), sibling(bob, mike), parent(mike,
         -- greg)
@@ -94,7 +95,9 @@ nEx2 = [(True, "cousin", ["jane", "bob"]),
      (True, "cousin", ["greg", "jess"]),
      (True, "cousin", ["mike", "sharon"]),
      (True, "cousin", ["sharon", "jane"]),
-     (True, "cousin", ["jane", "jess"])]
+     (True, "cousin", ["jane", "jess"]),
+     (True, "cousin", ["mike", "mike"]),
+     (True, "cousin", ["sharon", "jess"])]
 
 pEx = [(True, "daughter", ["mary", "ann"]),
        (True, "daughter", ["eve", "tom"])]
@@ -110,6 +113,10 @@ rel4 = ((True, "cousin", [1, 2]), [(True, "parent", [3, 1])])
 rel5 = ((True, "cousin", [1, 2]), [(True, "sibling", [1, 2])])
 rel6 = ((True, "cousin", [1,2]), [])
 rel7 = ((True, "daughter", [1,2]), [])
+
+-- takes a relation and a clause and adds the clause to the right hand side
+conj :: Relation -> ArgClause -> Relation
+conj (a, b) c = (a, (c:b))
 
 -- hoogle?
 fst3 :: (a, b, c) -> a
@@ -146,20 +153,33 @@ p4 b (x:xs) y = p4 b xs (foldr (++) [] (map (p2 b x) y))
 -- does this relation cover the positive examples?
 coverspos :: Relation -> BackKnow -> [Clause] -> Bool
 coverspos r b [] = True
-coverspos r b (c:cs) | tryVMaps (possMappings b r c) r b c == False = False
+coverspos r b (c:cs) | tryVMaps (possMaps b r c) r b c == False = False
                      | otherwise = coverspos r b cs
+
+coversposc :: Relation -> BackKnow -> [Clause] -> Int
+coversposc r b x = coversposc2 r b x 0
+
+coversposc2 :: Relation -> BackKnow -> [Clause] -> Int -> Int
+coversposc2 r b [] i = i
+coversposc2 r b (c:cs) i | tryVMaps (possMaps b r c) r b c == False = coversposc2 r b cs i
+                         | otherwise = coversposc2 r b cs (i+1)
+
+coversnegc :: Relation -> BackKnow -> [Clause] -> Int
+coversnegc r b [] = 0
+coversnegc r b (c:cs) | tryVMaps (possMaps b r c) r b c == True = (coversnegc r b cs) + 1
+                      | otherwise = coversnegc r b cs
 
 -- does this relation cover no negative examples?
 coversnoneg :: Relation -> BackKnow -> [Clause] -> Bool
 coversnoneg r b [] = True
-coversnoneg r b (c:cs) | tryVMaps (possMappings b r c) r b c == True = False
+coversnoneg r b (c:cs) | tryVMaps (possMaps b r c) r b c == True = False
                      | otherwise = coversnoneg r b cs
 
 covers :: Relation -> BackKnow -> Examples -> Bool
 covers r b (p, n) = and [(coverspos r b p), (coversnoneg r b n)]
 
-possMappings :: BackKnow -> Relation -> Clause -> [VarMap]
-possMappings b r c | diff == [] = vm
+possMaps :: BackKnow -> Relation -> Clause -> [VarMap]
+possMaps b r c | diff == [] = vm
                    | otherwise = p4 b diff vm
                    where diff = (getOutVars r) \\ (getInVars r)
                          vm = [zip (getInVars r) (thd3 c)]
@@ -219,8 +239,14 @@ addSet (x:xs) y | x `elem` y = addSet xs y
                 | otherwise = addSet xs (x:y)
 
 backInfo :: BackKnow -> [([Char], Integer)]
-backInfo [] = []
-backInfo (x:xs) = ((snd3 x), (fromIntegral (length (thd3 x)))):(backInfo (dropWhile (\a -> snd3 a == snd3 x) xs))
+backInfo x = nub (backInfo2 x)
+
+backInfo2 :: BackKnow -> [([Char], Integer)]
+backInfo2 [] = []
+backInfo2 (x:xs) = (b, (fromIntegral (length c))):(backInfo (dropWhile f xs)) where
+                    b = snd3 x
+                    c = thd3 x
+                    f = (\a -> snd3 a == snd3 x)
 
 allpos :: Integer -> BackKnow -> [[Literal]]
 allpos 1 b = [[x] | x <- listLits b]
@@ -248,7 +274,9 @@ completeb b = (switchallc ((allpos2 b) \\ b)) ++ b
 
 -- need to generate every useful argclause
 useargs :: Relation -> BackKnow -> [ArgClause]
-useargs r b = mkargcls (backInfo b) (fromIntegral (length (nub ((getOutVars r) ++ getInVars r)))  + 1)
+useargs r b = mkargcls b2 (fromIntegral (length argset) + 1) where
+                b2 = backInfo b
+                argset = nub ((getOutVars r) ++ getInVars r)
 
 numProd :: Integer -> Integer -> [[Integer]]
 numProd i 1 = [[x] | x <- [1..i]]
@@ -264,3 +292,38 @@ mkargcl (c, i) j = [(combt True x) | x <- endl] ++ [(combt False x) | x <- endl]
 
 combt :: a -> (b, c) -> (a, b, c)
 combt x (y, z) = (x, y, z)
+
+listViable :: Relation -> BackKnow -> ([Clause],[Clause]) -> [ArgClause]
+--listViable r b (p, n) = [x | x <- (useargs r b), coverspos (conj r x) b p, (coversnegc (conj r x) b n) < (length n)] \\ (snd r)
+listViable r b (p, n) = [x | x <- (useargs r b), coverspos (conj r x) b p] \\ (snd r)
+
+-- how many negative examples does this cover?
+hScore :: Relation -> BackKnow -> [Clause] -> ArgClause -> Int
+hScore r b cs c = coversnegc (conj r c) b cs
+
+-- sort clauses by how many negative examples they cover
+--sortAClauses :: Relation -> BackKnow -> Examples -> [ArgClause]
+--sortAClauses r b e = sac2 r b e []
+--
+qSortc :: [ArgClause] -> Relation -> BackKnow -> [Clause] -> [ArgClause]
+qSortc [] r b n = []
+qSortc (x:xs) r b n = (qSortc higher r b n) ++ [x] ++ (qSortc lower r b n) where
+                        lower = filter (\a -> ltc x a r b n) xs
+                        higher = filter (\a -> gtc x a r b n) xs
+
+
+
+ltc :: ArgClause -> ArgClause -> Relation -> BackKnow -> [Clause] -> Bool
+ltc a1 a2 r b n = (hScore r b n a1) < (hScore r b n a2)
+
+gtc :: ArgClause -> ArgClause -> Relation -> BackKnow -> [Clause] -> Bool
+gtc a1 a2 r b n = (hScore r b n a1) >= (hScore r b n a2)
+
+improveRel :: Relation -> BackKnow -> Examples -> Relation
+improveRel r b e@(p,n) = conj r (head q) where
+                        q = qSortc (listViable r b e) r b n
+
+-- hill climb search? holy shit?
+findRel :: Relation -> BackKnow -> Examples -> Relation
+findRel r b e | covers r (completeb b) e == True = r
+              | otherwise = findRel (improveRel r (completeb b) e) b e
