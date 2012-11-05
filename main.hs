@@ -56,29 +56,32 @@ backno2 = [(True, "sibling", ["james", "steve"]),
 
 
 backno5 = [(True, "sibling", ["ron", "ali"]),
-            (True, "sibling", ["ali", "ron"]),
-            (True, "parent", ["bo", "ron"]),
-            (True, "parent", ["joy", "ron"]),
-            (True, "parent", ["bo", "ali"]),
-            (True, "parent", ["joy", "ali"]),
-            (True, "sibling", ["bo", "jill"]),
-            (True, "sibling", ["jill", "bo"]),
-            (True, "parent", ["ben", "sam"]),
-            (True, "parent", ["jill", "sam"]),
-            (True, "sibling", ["beth", "tim"]),
-            (True, "sibling", ["tim", "beth"]),
-            (True, "parent", ["jeff", "beth"]),
-            (True, "parent", ["jeff", "tim"]),
-            (True, "parent", ["kath", "tim"]),
-            (True, "parent", ["kath", "beth"])]
+          (True, "sibling", ["jane", "mark"]),
+          (True, "parent", ["bob", "ron"]),
+          (True, "parent", ["jane", "ron"]),
+          (True, "parent", ["bob", "ali"]),
+          (True, "parent", ["jane", "ali"]),
+          (True, "sibling", ["jane", "mark"]),
+          (True, "parent", ["mark", "jill"]),
+          (True, "parent", ["sharron", "jill"]),
+          (True, "sibling", ["sharron", "max"]),
+          (True, "parent", ["tim", "max"]),
+          (True, "sibling", ["tim", "alan"]),
+          (True, "parent", ["ace", "mitt"]),
+          (True, "parent", ["flash", "mitt"]),
+          (True, "sibling", ["flash", "gordon"])]
 
-pEx5 = [(True, "cousin", ["ron", "sam"]),
-          (True, "cousin", ["sam", "ron"]),
-          (True, "cousin", ["ali", "sam"])]
+pEx5 = [(True, "cousin", ["ron", "jill"]),
+        (True, "cousin", ["ali", "jill"]),
+        (True, "cousin", ["jill", "ron"]),
+        (True, "cousin", ["jill", "ali"])]
 
-nEx5 = [(True, "cousin", ["beth", "sam"]),
-          (True, "cousin", ["tim", "ali"]),
-          (True, "cousin", ["beth", "sam"])]
+nEx5 = [(True, "cousin", ["bob", "ron"]),
+        (True, "cousin", ["jane", "mark"]),
+        (True, "cousin", ["jane", "ali"]),
+        (True, "cousin", ["max", "mark"]),
+        (True, "cousin", ["ali", "ron"]),
+        (True, "cousin", ["mitt", "ron"])]
 
 backno4 = [(True, "a", ["1"]),
         (True, "a", ["2"]),
@@ -337,7 +340,7 @@ combt x (y, z) = (x, y, z)
 
 listViable :: Relation -> BackKnow -> ([Clause],[Clause]) -> [ArgClause]
 --listViable r b (p, n) = [x | x <- (useargs r b), coverspos (conj r x) b p, (coversnegc (conj r x) b n) < (length n)] \\ (snd r)
-listViable r b (p, n) = [x | x <- (useargs r b), coverspos (conj r x) b p] \\ (snd r)
+listViable r b (p, n) = [x | x <- (useargs r b), coverspos (conj r x) b p, not (x `elem` (snd r))]
 
 -- how many negative examples does this cover?
 hScore :: Relation -> BackKnow -> [Clause] -> ArgClause -> Int
@@ -353,17 +356,29 @@ qSortc (x:xs) r b n = (qSortc higher r b n) ++ [x] ++ (qSortc lower r b n) where
                         lower = filter (\a -> ltc x a r b n) xs
                         higher = filter (\a -> gtc x a r b n) xs
 
-
-
 ltc :: ArgClause -> ArgClause -> Relation -> BackKnow -> [Clause] -> Bool
 ltc a1 a2 r b n = (hScore r b n a1) < (hScore r b n a2)
 
 gtc :: ArgClause -> ArgClause -> Relation -> BackKnow -> [Clause] -> Bool
 gtc a1 a2 r b n = (hScore r b n a1) >= (hScore r b n a2)
 
+getBestRel :: [ArgClause] -> Relation -> BackKnow -> Examples -> ArgClause
+getBestRel [x] r b n = x
+getBestRel xs r b e@(p,n) = getBR2 x r b e g (hScore r b n x) where 
+                              g = dropWhile (\a -> not (coverspos (conj r a) b p)) xs
+                              x = head g
+
+getBR2 :: ArgClause -> Relation -> BackKnow -> Examples -> [ArgClause] -> Int -> ArgClause
+getBR2 x _ _ _ [] _ = x
+getBR2 x r b e@(p, n) (c:cs) i | (trace (show c)) (c `elem` (snd r)) = getBR2 x r b e cs i
+                               | (coverspos (conj r c) b p) == False = getBR2 x r b e cs i
+                               | y < i = getBR2 c r b e cs y 
+                               | otherwise = getBR2 x r b e cs i
+                                where y = hScore r b n c
+
 improveRel :: Relation -> BackKnow -> Examples -> Relation
-improveRel r b e@(p,n) = conj r (head q) where
-                          q = qSortc (listViable r b e) r b n
+improveRel r b e@(p,n) = conj r q where
+                          q = getBestRel (useargs r b) r b e
 
 -- hill climb search? holy shit?
 findRel :: Relation -> BackKnow -> Examples -> Relation
@@ -373,7 +388,7 @@ findRel r b e | covers r (completeb b) e == True = r
 
 findRel2 :: Relation -> BackKnow -> Examples -> Relation
 findRel2 r b e | trace (show r) covers r b e == True = r
-               | listViable r b e == [] = r
+               | listViable r b e == [] = (trace "fail") r
                | otherwise = findRel2 (improveRel r b e) b e
 
 
@@ -402,3 +417,7 @@ main3 = do
     time $ findRel2 rel6 (completeb backno5) (pEx5, nEx5) `seq` return ()
     putStrLn "Done."
 
+main4 = do
+    putStrLn "Starting..."
+    time $ findRel2 rel6 (completeb backno2) (pEx2, nEx2) `seq` return ()
+    putStrLn "Done."
