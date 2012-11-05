@@ -1,6 +1,11 @@
 import Debug.Trace
 import Data.List
 
+import Text.Printf
+import Control.Exception
+import System.CPUTime
+
+
 type Literal = [Char]
 
 type Clause = (Bool, [Char], [Literal])
@@ -35,6 +40,8 @@ backno2 = [(True, "sibling", ["james", "steve"]),
         (True, "sibling", ["jess", "greg"]),
         (True, "sibling", ["bob", "mike"]),
         (True, "sibling", ["mike", "bob"]),
+        (True, "sibling", ["mark, dave"]),
+        (True, "sibling", ["dave", "mark"]),
         (True, "parent", ["bob", "james"]),
         (True, "parent", ["bob", "steve"]),
         (True, "parent", ["jane", "james"]),
@@ -42,7 +49,36 @@ backno2 = [(True, "sibling", ["james", "steve"]),
         (True, "parent", ["mike", "greg"]),
         (True, "parent", ["mike", "jess"]),
         (True, "parent", ["sharon", "greg"]),
-        (True, "parent", ["sharon", "jess"])]
+        (True, "parent", ["sharon", "jess"]),
+        (True, "parent", ["dave", "jim"]),
+        (True, "parent", ["sarah", "jim"]),
+        (True, "parent", ["mark", "chris"])]
+
+
+backno5 = [(True, "sibling", ["ron", "ali"]),
+            (True, "sibling", ["ali", "ron"]),
+            (True, "parent", ["bo", "ron"]),
+            (True, "parent", ["joy", "ron"]),
+            (True, "parent", ["bo", "ali"]),
+            (True, "parent", ["joy", "ali"]),
+            (True, "sibling", ["bo", "jill"]),
+            (True, "sibling", ["jill", "bo"]),
+            (True, "parent", ["ben", "sam"]),
+            (True, "parent", ["jill", "sam"]),
+            (True, "sibling", ["beth", "tim"]),
+            (True, "sibling", ["tim", "beth"]),
+            (True, "parent", ["jeff", "beth"]),
+            (True, "parent", ["jeff", "tim"]),
+            (True, "parent", ["kath", "tim"]),
+            (True, "parent", ["kath", "beth"])]
+
+pEx5 = [(True, "cousin", ["ron", "sam"]),
+          (True, "cousin", ["sam", "ron"]),
+          (True, "cousin", ["ali", "sam"])]
+
+nEx5 = [(True, "cousin", ["beth", "sam"]),
+          (True, "cousin", ["tim", "ali"]),
+          (True, "cousin", ["beth", "sam"])]
 
 backno4 = [(True, "a", ["1"]),
         (True, "a", ["2"]),
@@ -77,7 +113,9 @@ pEx2 = [(True, "cousin", ["james", "greg"]),
      (True, "cousin", ["jess", "james"]),
      (True, "cousin", ["jess", "steve"]),
      (True, "cousin", ["james", "jess"]),
-     (True, "cousin", ["steve", "jess"])]
+     (True, "cousin", ["steve", "jess"]),
+     (True, "cousin", ["chris", "jim"]),
+     (True, "cousin", ["jim", "chris"])]
 
 nEx3 = [(True, "cousin", ["james", "james"]),
         (True, "cousin", ["sharon", "mike"]),
@@ -97,7 +135,11 @@ nEx2 = [(True, "cousin", ["jane", "bob"]),
      (True, "cousin", ["sharon", "jane"]),
      (True, "cousin", ["jane", "jess"]),
      (True, "cousin", ["mike", "mike"]),
-     (True, "cousin", ["sharon", "jess"])]
+     (True, "cousin", ["sharon", "jess"]),
+     (True, "cousin", ["chris", "jess"]),
+     (True, "cousin", ["chris", "james"]),
+     (True, "cousin", ["chris", "greg"]),
+     (True, "cousin", ["jim", "steve"])]
 
 pEx = [(True, "daughter", ["mary", "ann"]),
        (True, "daughter", ["eve", "tom"])]
@@ -138,7 +180,7 @@ getOutVars r = nub $ concat $ map thd3 (snd r)
 
 -- utility for p4, messy: needs restructure and rename
 p2 :: BackKnow -> Integer -> VarMap -> [VarMap]
-p2 b i vm = p3 [(i,y) | y <- (listLits b)] vm [] where
+p2 b i vm = p3 [(i,y) | y <- (listLits b), not (y `elem` (map snd vm))] vm [] where
             p3 :: [(Integer, Literal)] -> VarMap -> [VarMap] -> [VarMap]
             p3 [] v s = s
             p3 (x:xs) v s = p3 xs v ((v ++ [x]):s)
@@ -280,7 +322,7 @@ useargs r b = mkargcls b2 (fromIntegral (length argset) + 1) where
 
 numProd :: Integer -> Integer -> [[Integer]]
 numProd i 1 = [[x] | x <- [1..i]]
-numProd i n = [x ++ [y] | x <- (numProd i (n-1)), y <- [1..i]]
+numProd i n = [x ++ [y] | x <- (numProd i (n-1)), y <- [1..i], not (y `elem` x)]
 
 mkargcls :: [([Char], Integer)] -> Integer -> [ArgClause]
 mkargcls [] i = []
@@ -321,9 +363,42 @@ gtc a1 a2 r b n = (hScore r b n a1) >= (hScore r b n a2)
 
 improveRel :: Relation -> BackKnow -> Examples -> Relation
 improveRel r b e@(p,n) = conj r (head q) where
-                        q = qSortc (listViable r b e) r b n
+                          q = qSortc (listViable r b e) r b n
 
 -- hill climb search? holy shit?
 findRel :: Relation -> BackKnow -> Examples -> Relation
 findRel r b e | covers r (completeb b) e == True = r
               | otherwise = findRel (improveRel r (completeb b) e) b e
+
+
+findRel2 :: Relation -> BackKnow -> Examples -> Relation
+findRel2 r b e | trace (show r) covers r b e == True = r
+               | listViable r b e == [] = r
+               | otherwise = findRel2 (improveRel r b e) b e
+
+
+time :: IO t -> IO t
+time a = do
+    start <- getCPUTime
+    v <- a
+    end   <- getCPUTime
+    let diff = (fromIntegral (end - start)) / (10^12)
+    printf "Computation time: %0.3f sec\n" (diff :: Double)
+    return v
+ 
+main = do
+    putStrLn "Starting..."
+    time $ findRel2 rel00 (completeb backno4) (pEx4, nEx4) `seq` return ()
+    putStrLn "Done."
+
+
+main2 = do
+    putStrLn "Starting..."
+    time $ findRel2 rel6 (backno5) (pEx5, nEx5) `seq` return ()
+    putStrLn "Done."
+
+main3 = do
+    putStrLn "Starting..."
+    time $ findRel2 rel6 (completeb backno5) (pEx5, nEx5) `seq` return ()
+    putStrLn "Done."
+
