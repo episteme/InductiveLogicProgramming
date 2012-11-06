@@ -104,6 +104,31 @@ nEx4 = [(True, "d", ["4"]),
         (True, "d", ["5"]),
         (True, "d", ["6"])]
 
+
+backno0 = [(True, "a", ["1"]),
+        (True, "a", ["2"]),
+        (True, "a", ["3"]),
+        (True, "a", ["9"]),
+        (True, "b", ["4"]),
+        (True, "b", ["5"]),
+        (True, "b", ["6"]),
+        (True, "c", ["2"]),
+        (True, "c", ["1"]),
+        (True, "c", ["3"]),
+        (True, "c", ["7"])]
+
+
+pEx0 = [(True, "d", ["1"]),
+        (True, "d", ["2"]),
+        (True, "d", ["3"])]
+
+
+nEx0 = [(True, "d", ["4"]),
+        (True, "d", ["5"]),
+        (True, "d", ["6"]),
+        (True, "d", ["7"]),
+        (True, "d", ["9"])]
+
 rel0 = ((True, "d", [1]), [(False, "a", [1]), (False, "c", [1])])
 rel00 = ((True, "d", [1]), [])
 rel01 = ((True, "d", [1]), [(False, "b", [1])])
@@ -218,7 +243,30 @@ coversnegc r b (c:cs) | tryVMaps (possMaps b r c) r b c == True = (coversnegc r 
 coversnoneg :: Relation -> BackKnow -> [Clause] -> Bool
 coversnoneg r b [] = True
 coversnoneg r b (c:cs) | tryVMaps (possMaps b r c) r b c == True = False
-                     | otherwise = coversnoneg r b cs
+                       | otherwise = coversnoneg r b cs
+
+coversamenegset :: Relation -> Relation -> BackKnow -> [Clause] -> Bool
+coversamenegset r1 r2 b [] = True
+coversamenegset r1 r2 b (x:xs) | tryVMaps (possMaps b r1 x) r1 b x == tryVMaps (possMaps b r2 x) r2 b x = coversamenegset r1 r2 b xs
+                               | otherwise = False
+
+-- returns True if x is a subset of y
+subsetC :: [Clause] -> [Clause] -> Bool
+subsetC [] _ = True
+subsetC (c:cs) d | c `elem` d = subsetC cs d
+                 | otherwise = False
+
+coverset :: Relation -> BackKnow -> [Clause] -> [Clause]
+coverset r b n = filter (\a -> tryVMaps (possMaps b r a) r b a) n
+
+-- irrelevant r1 r2: r2 has extra clause
+irrelevantC :: Relation -> Relation -> BackKnow -> Examples -> Bool
+irrelevantC r1 r2 b e@(p,n) = (subsetC (coverset r1 b n) (coverset r2 b n))
+
+
+
+
+
 
 covers :: Relation -> BackKnow -> Examples -> Bool
 covers r b (p, n) = and [(coverspos r b p), (coversnoneg r b n)]
@@ -364,32 +412,63 @@ gtc a1 a2 r b n = (hScore r b n a1) >= (hScore r b n a2)
 
 getBestRel :: [ArgClause] -> Relation -> BackKnow -> Examples -> ArgClause
 getBestRel [x] r b n = x
-getBestRel xs r b e@(p,n) = getBR2 x r b e g (hScore r b n x) where 
-                              g = dropWhile (\a -> not (coverspos (conj r a) b p)) xs
+getBestRel xs r b e@(p,n) = getBR2 x r b e (tail g) (hScore r b n x) where 
+                              g = dropWhile (\a -> notViable a r b p) xs
                               x = head g
+
+getBest2 :: [ArgClause] -> Relation -> BackKnow -> Examples -> ArgClause
+getBest2 [] _ _ _ = undefined
+getBest2 (x:xs) r b e | covers (conj r x) b e = x
+                      | otherwise = getBest2 xs r b e
 
 getBR2 :: ArgClause -> Relation -> BackKnow -> Examples -> [ArgClause] -> Int -> ArgClause
 getBR2 x _ _ _ [] _ = x
-getBR2 x r b e@(p, n) (c:cs) i | (trace (show c)) (c `elem` (snd r)) = getBR2 x r b e cs i
-                               | (coverspos (conj r c) b p) == False = getBR2 x r b e cs i
+getBR2 x r b e@(p, n) (c:cs) i | (trace ("i" ++ show c)) notViable c r b p = getBR2 x r b e cs i
+                               | y == 0 = c
                                | y < i = getBR2 c r b e cs y 
                                | otherwise = getBR2 x r b e cs i
                                 where y = hScore r b n c
+
+notViable :: ArgClause -> Relation -> BackKnow -> [Clause] -> Bool
+notViable a r b p | or [(a `elem` (snd r)), not((coverspos (conj r a) b p))] = True
+                  | otherwise = False
+
+viable :: ArgClause -> Relation -> BackKnow -> [Clause] -> Bool
+viable a r b p | or [(a `elem` (snd r)), not((coverspos (conj r a) b p))] = False
+               | otherwise = True
 
 improveRel :: Relation -> BackKnow -> Examples -> Relation
 improveRel r b e@(p,n) = conj r q where
                           q = getBestRel (useargs r b) r b e
 
--- hill climb search? holy shit?
 findRel :: Relation -> BackKnow -> Examples -> Relation
 findRel r b e | covers r (completeb b) e == True = r
               | otherwise = findRel (improveRel r (completeb b) e) b e
-
 
 findRel2 :: Relation -> BackKnow -> Examples -> Relation
 findRel2 r b e | trace (show r) covers r b e == True = r
                | listViable r b e == [] = (trace "fail") r
                | otherwise = findRel2 (improveRel r b e) b e
+
+-- need to generate every useful argclause
+useargs2 :: Relation -> BackKnow -> [Clause] -> [[ArgClause]]
+useargs2 r b p = [[x] | x <- useargs r b, coverspos (conj r x) b p]
+
+-- goDeeper :: [ArgClause] -> Relation -> [[ArgClause]]
+
+mergeAC :: [[ArgClause]] -> Relation -> BackKnow -> Examples -> [[ArgClause]]
+mergeAC ac1 r b e@(p,n) = [(x ++ y) | x <- ac1, y <- (useargs2 ((fst r), x) b p), not (irrelevantC ((fst r), x) ((fst r), (x ++ y)) b e), coverspos ((fst r), (x ++ y)) b p]
+
+findSol :: Relation -> BackKnow -> Examples -> [[ArgClause]] -> Relation
+findSol r b e@(p,n) [] = findSol r b e (useargs2 r b p)
+findSol r b e@(p,n) a | trace (show a) findAC a r b e == [] = findSol r b e (mergeAC a r b e)
+                      | otherwise = (fst r, (findAC a r b e))
+
+
+findAC :: [[ArgClause]] -> Relation -> BackKnow -> Examples -> [ArgClause]
+findAC [] r b e = []
+findAC (x:xs) r b e | covers ((fst r), x) b e = x
+                    | otherwise = findAC xs r b e
 
 
 time :: IO t -> IO t
@@ -414,10 +493,10 @@ main2 = do
 
 main3 = do
     putStrLn "Starting..."
-    time $ findRel2 rel6 (completeb backno5) (pEx5, nEx5) `seq` return ()
+    time $ findSol rel6 (completeb backno5) (pEx5, nEx5) [] `seq` return ()
     putStrLn "Done."
 
 main4 = do
     putStrLn "Starting..."
-    time $ findRel2 rel6 (completeb backno2) (pEx2, nEx2) `seq` return ()
+    time $ findSol rel6 (completeb backno2) (pEx2, []) [] `seq` return ()
     putStrLn "Done."
