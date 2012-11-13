@@ -175,6 +175,37 @@ pEx = [(True, "daughter", ["mary", "ann"]),
 nEx = [(True, "daughter", ["tom", "ann"]),
        (True, "daughter", ["eve", "ann"])]
 
+
+backno8 = [(True, "parent", ["bob", "laura"]),
+            (True, "sibling", ["laura", "james"]),
+            (True, "sibling", ["james", "laura"]),
+            (True, "parent", ["jane", "james"]),
+            (True, "sibling", ["jane", "mike"]),
+            (True, "sibling", ["mike", "jane"]),
+            (True, "parent", ["mike", "bruce"]),
+            (True, "parent", ["sarah", "bruce"]),
+            (True, "parent", ["bob", "james"]),
+            (True, "parent", ["jane", "laura"]),
+            (True, "sibling", ["jim", "bob"]),
+            (True, "sibling", ["bob", "jim"]),
+            (True, "sibling", ["may", "bob"]),
+            (True, "male", ["jim"]),
+            (True, "male", ["bob"]),
+            (True, "male", ["james"]),
+            (True, "male", ["mike"]),
+            (True, "male", ["bruce"])]
+
+pEx8 = [(True, "uncle", ["mike", "james"]),
+        (True, "uncle", ["mike", "laura"]),
+        (True, "uncle", ["jim", "laura"]),
+        (True, "uncle", ["jim", "james"])]
+
+nEx8 = [(True, "uncle", ["bob", "james"])]
+
+rel8 = ((True, "uncle", [1, 2]), [])
+rel9 = ((True, "uncle", [1, 2]), [(True, "parent", [3, 2]), (True, "sibling", [3, 1]), (True, "male", [1])])
+
+
 rel = ((True, "daughter", [1, 2]), [(True, "female", [1]), (True, "parent", [2, 1])])
 rel2 = ((True, "daugther", [1, 2]), [(True, "female", [1])])
 rel3 = ((True, "cousin", [1, 2]), [(True, "parent", [3, 1]), (True, "sibling", [3,4]),
@@ -347,8 +378,14 @@ allpos n b = [x ++ [y] | x <- (allpos (n-1) b), y <- (listLits b)]
 
 allpos2 :: BackKnow -> BackKnow
 allpos2 b = ap2 (backInfo b) [] where
-             ap2 [] x = x
-             ap2 (x:xs) y = [(True, (fst x), p) | p <- (allpos (snd x) b)] ++ (ap2 xs y)
+                ap2 [] x = x
+                ap2 (x:xs) y = [(True, (fst x), p) | p <- (allpos (snd x) b)] ++ (ap2 xs y)
+
+-- generates everything that can possibly be negated in these examples
+allpos3 :: [Clause] -> BackKnow -> BackKnow
+allpos3 c@(d:ds) b = [(False, (snd3 d), p) | p <- f] \\ (switchallc c) where
+                        f = allpos (fromIntegral $ length $ thd3 d) b
+
 
 showb :: BackKnow -> [Char]
 showb [] = []
@@ -364,6 +401,8 @@ switchallc (x:xs) = (switchc x):(switchallc xs)
 
 completeb :: BackKnow -> BackKnow
 completeb b = (switchallc ((allpos2 b) \\ b)) ++ b
+
+
 
 -- need to generate every useful argclause
 useargs :: Relation -> BackKnow -> [ArgClause]
@@ -454,20 +493,19 @@ findRel2 r b e | trace (show r) covers r b e == True = r
 useargs2 :: Relation -> BackKnow -> [Clause] -> [[ArgClause]]
 useargs2 r b p = [[x] | x <- useargs r b, coverspos (conj r x) b p]
 
--- goDeeper :: [ArgClause] -> Relation -> [[ArgClause]]
 
 mergeAC :: [[ArgClause]] -> Relation -> BackKnow -> Examples -> [[ArgClause]]
 mergeAC ac1 r b e@(p,n) = [(x ++ y) | x <- ac1, y <- (useargs2 ((fst r), x) b p), not (irrelevantC ((fst r), x) ((fst r), (x ++ y)) b e), coverspos ((fst r), (x ++ y)) b p]
 
-findSol :: Relation -> BackKnow -> Examples -> [[ArgClause]] -> Relation
+findSol :: Relation -> BackKnow -> Examples -> [[ArgClause]] -> [Relation]
 findSol r b e@(p,n) [] = findSol r b e (useargs2 r b p)
 findSol r b e@(p,n) a | trace (show a) findAC a r b e == [] = findSol r b e (mergeAC a r b e)
-                      | otherwise = (fst r, (findAC a r b e))
+                      | otherwise = (findAC a r b e)
 
 
-findAC :: [[ArgClause]] -> Relation -> BackKnow -> Examples -> [ArgClause]
+findAC :: [[ArgClause]] -> Relation -> BackKnow -> Examples -> [Relation]
 findAC [] r b e = []
-findAC (x:xs) r b e | covers ((fst r), x) b e = x
+findAC (x:xs) r b e | covers ((fst r), x) b e = ((fst r), x):(findAC xs r b e)
                     | otherwise = findAC xs r b e
 
 
