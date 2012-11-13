@@ -499,15 +499,34 @@ mergeAC ac1 r b e@(p,n) = [(x ++ y) | x <- ac1, y <- (useargs2 ((fst r), x) b p)
 
 findSol :: Relation -> BackKnow -> Examples -> [[ArgClause]] -> [Relation]
 findSol r b e@(p,n) [] = findSol r b e (useargs2 r b p)
-findSol r b e@(p,n) a | trace (show a) findAC a r b e == [] = findSol r b e (mergeAC a r b e)
+--findSol r b e@(p,n) a | trace (show a) findAC a r b e == [] = findSol r b e (mergeAC a r b e)
+findSol r b e@(p,n) a | findAC a r b e == [] = findSol r b e (mergeAC a r b e)
                       | otherwise = (findAC a r b e)
 
+uniqify :: [ArgClause] -> [ArgClause]
+uniqify [] = []
+uniqify x = sortBy compAs x
+
+compAs :: ArgClause -> ArgClause -> Ordering
+compAs a1 a2 | (snd3 a1) < (snd3 a2) = LT
+             | otherwise = GT
 
 findAC :: [[ArgClause]] -> Relation -> BackKnow -> Examples -> [Relation]
 findAC [] r b e = []
 findAC (x:xs) r b e | covers ((fst r), x) b e = ((fst r), x):(findAC xs r b e)
                     | otherwise = findAC xs r b e
 
+showrs :: [Relation] -> String
+showrs [] = ""
+showrs (x:xs) = (showr x) ++ "\n" ++ (showrs xs)
+
+showr :: Relation -> String
+showr r = (snd3 $ fst r) ++ (show $ thd3 $ fst r) ++ " iff " ++ (showc (snd r))
+ 
+showc :: [ArgClause] -> String
+showc [] = ""
+showc [x] = (show (fst3 x)) ++ " " ++ (snd3 x) ++ (show (thd3 x))
+showc (x:xs) = (show (fst3 x)) ++ " " ++ (snd3 x) ++ (show (thd3 x)) ++ " AND " ++ (showc xs)
 
 time :: IO t -> IO t
 time a = do
@@ -538,3 +557,5 @@ main4 = do
     putStrLn "Starting..."
     time $ findSol rel6 (completeb backno2) (pEx2, []) [] `seq` return ()
     putStrLn "Done."
+
+ 
