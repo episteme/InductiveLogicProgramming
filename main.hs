@@ -294,11 +294,6 @@ coverset r b n = filter (\a -> tryVMaps (possMaps b r a) r b a) n
 irrelevantC :: Relation -> Relation -> BackKnow -> Examples -> Bool
 irrelevantC r1 r2 b e@(p,n) = (subsetC (coverset r1 b n) (coverset r2 b n))
 
-
-
-
-
-
 covers :: Relation -> BackKnow -> Examples -> Bool
 covers r b (p, n) = and [(coverspos r b p), (coversnoneg r b n)]
 
@@ -402,8 +397,6 @@ switchallc (x:xs) = (switchc x):(switchallc xs)
 completeb :: BackKnow -> BackKnow
 completeb b = (switchallc ((allpos2 b) \\ b)) ++ b
 
-
-
 -- need to generate every useful argclause
 useargs :: Relation -> BackKnow -> [ArgClause]
 useargs r b = mkargcls b2 (fromIntegral (length argset) + 1) where
@@ -419,75 +412,17 @@ mkargcls [] i = []
 mkargcls (x:xs) i = (mkargcl x i) ++ (mkargcls xs i)
 
 mkargcl :: ([Char], Integer) -> Integer -> [ArgClause]
+mkargcl (c, 1) j = [(combt True x) | x <- endl] ++ [(combt False x) | x <- endl] where
+                    endl = zip (replicate (length (numProd (j-1) 1)) c) (numProd (j-1) 1)
 mkargcl (c, i) j = [(combt True x) | x <- endl] ++ [(combt False x) | x <- endl] where
                     endl = zip (replicate (length (numProd j i)) c) (numProd j i)
 
 combt :: a -> (b, c) -> (a, b, c)
 combt x (y, z) = (x, y, z)
 
-listViable :: Relation -> BackKnow -> ([Clause],[Clause]) -> [ArgClause]
---listViable r b (p, n) = [x | x <- (useargs r b), coverspos (conj r x) b p, (coversnegc (conj r x) b n) < (length n)] \\ (snd r)
-listViable r b (p, n) = [x | x <- (useargs r b), coverspos (conj r x) b p, not (x `elem` (snd r))]
-
 -- how many negative examples does this cover?
 hScore :: Relation -> BackKnow -> [Clause] -> ArgClause -> Int
 hScore r b cs c = coversnegc (conj r c) b cs
-
--- sort clauses by how many negative examples they cover
---sortAClauses :: Relation -> BackKnow -> Examples -> [ArgClause]
---sortAClauses r b e = sac2 r b e []
---
-qSortc :: [ArgClause] -> Relation -> BackKnow -> [Clause] -> [ArgClause]
-qSortc [] r b n = []
-qSortc (x:xs) r b n = (qSortc higher r b n) ++ [x] ++ (qSortc lower r b n) where
-                        lower = filter (\a -> ltc x a r b n) xs
-                        higher = filter (\a -> gtc x a r b n) xs
-
-ltc :: ArgClause -> ArgClause -> Relation -> BackKnow -> [Clause] -> Bool
-ltc a1 a2 r b n = (hScore r b n a1) < (hScore r b n a2)
-
-gtc :: ArgClause -> ArgClause -> Relation -> BackKnow -> [Clause] -> Bool
-gtc a1 a2 r b n = (hScore r b n a1) >= (hScore r b n a2)
-
-getBestRel :: [ArgClause] -> Relation -> BackKnow -> Examples -> ArgClause
-getBestRel [x] r b n = x
-getBestRel xs r b e@(p,n) = getBR2 x r b e (tail g) (hScore r b n x) where 
-                              g = dropWhile (\a -> notViable a r b p) xs
-                              x = head g
-
-getBest2 :: [ArgClause] -> Relation -> BackKnow -> Examples -> ArgClause
-getBest2 [] _ _ _ = undefined
-getBest2 (x:xs) r b e | covers (conj r x) b e = x
-                      | otherwise = getBest2 xs r b e
-
-getBR2 :: ArgClause -> Relation -> BackKnow -> Examples -> [ArgClause] -> Int -> ArgClause
-getBR2 x _ _ _ [] _ = x
-getBR2 x r b e@(p, n) (c:cs) i | (trace ("i" ++ show c)) notViable c r b p = getBR2 x r b e cs i
-                               | y == 0 = c
-                               | y < i = getBR2 c r b e cs y 
-                               | otherwise = getBR2 x r b e cs i
-                                where y = hScore r b n c
-
-notViable :: ArgClause -> Relation -> BackKnow -> [Clause] -> Bool
-notViable a r b p | or [(a `elem` (snd r)), not((coverspos (conj r a) b p))] = True
-                  | otherwise = False
-
-viable :: ArgClause -> Relation -> BackKnow -> [Clause] -> Bool
-viable a r b p | or [(a `elem` (snd r)), not((coverspos (conj r a) b p))] = False
-               | otherwise = True
-
-improveRel :: Relation -> BackKnow -> Examples -> Relation
-improveRel r b e@(p,n) = conj r q where
-                          q = getBestRel (useargs r b) r b e
-
-findRel :: Relation -> BackKnow -> Examples -> Relation
-findRel r b e | covers r (completeb b) e == True = r
-              | otherwise = findRel (improveRel r (completeb b) e) b e
-
-findRel2 :: Relation -> BackKnow -> Examples -> Relation
-findRel2 r b e | trace (show r) covers r b e == True = r
-               | listViable r b e == [] = (trace "fail") r
-               | otherwise = findRel2 (improveRel r b e) b e
 
 -- need to generate every useful argclause
 useargs2 :: Relation -> BackKnow -> [Clause] -> [[ArgClause]]
@@ -495,21 +430,14 @@ useargs2 r b p = [[x] | x <- useargs r b, coverspos (conj r x) b p]
 
 
 mergeAC :: [[ArgClause]] -> Relation -> BackKnow -> Examples -> [[ArgClause]]
-mergeAC ac1 r b e@(p,n) = [(x ++ y) | x <- ac1, y <- (useargs2 ((fst r), x) b p), not (irrelevantC ((fst r), x) ((fst r), (x ++ y)) b e), coverspos ((fst r), (x ++ y)) b p]
+mergeAC ac1 r b e@(p,n) = uniqueACs [(x ++ y) | x <- ac1, y <- (useargs2 ((fst r), x) b p), not (irrelevantC ((fst r), x) ((fst r), (x ++ y)) b e), coverspos ((fst r), (x ++ y)) b p, not ((head y) `elem` x)]
+--mergeAC ac1 r b e@(p,n) = uniqueACs [(x ++ y) | x <- ac1, y <- (useargs2 ((fst r), x) b p), coverspos ((fst r), (x ++ y)) b p, not ((head y) `elem` x)]
 
 findSol :: Relation -> BackKnow -> Examples -> [[ArgClause]] -> [Relation]
 findSol r b e@(p,n) [] = findSol r b e (useargs2 r b p)
---findSol r b e@(p,n) a | trace (show a) findAC a r b e == [] = findSol r b e (mergeAC a r b e)
-findSol r b e@(p,n) a | findAC a r b e == [] = findSol r b e (mergeAC a r b e)
+findSol r b e@(p,n) a | trace (show a) findAC a r b e == [] = findSol r b e (mergeAC a r b e)
+--findSol r b e@(p,n) a | findAC a r b e == [] = findSol r b e (mergeAC a r b e)
                       | otherwise = (findAC a r b e)
-
-uniqify :: [ArgClause] -> [ArgClause]
-uniqify [] = []
-uniqify x = sortBy compAs x
-
-compAs :: ArgClause -> ArgClause -> Ordering
-compAs a1 a2 | (snd3 a1) < (snd3 a2) = LT
-             | otherwise = GT
 
 findAC :: [[ArgClause]] -> Relation -> BackKnow -> Examples -> [Relation]
 findAC [] r b e = []
@@ -528,6 +456,33 @@ showc [] = ""
 showc [x] = (show (fst3 x)) ++ " " ++ (snd3 x) ++ (show (thd3 x))
 showc (x:xs) = (show (fst3 x)) ++ " " ++ (snd3 x) ++ (show (thd3 x)) ++ " AND " ++ (showc xs)
 
+-- sort relations in increasing number of variables mentioned
+sortR :: [Relation] -> [Relation]
+sortR = sortBy sortR2
+
+-- creates ordering of relations
+sortR2 :: Relation -> Relation -> Ordering
+sortR2 r1 r2 | (numVars r1) > (numVars r2) = GT
+             | (numVars r1) < (numVars r2) = LT
+             | (numVars r1) == (numVars r2) = EQ
+
+-- takes a relation and returns the number of unique variables mentioned
+numVars :: Relation -> Int
+numVars r = fromIntegral $ maximum ((getInVars r) ++ (getOutVars r))
+
+-- takes a [[ArgClause]] and returns a list of unique [ArgClause]
+uniqueACs :: [[ArgClause]] -> [[ArgClause]]
+uniqueACs as = uR2 as [] where
+                uR2 [] s = s
+                uR2 (x:xs) s | elemAC xs x == True = uR2 xs s
+                             | otherwise = uR2 xs (x:s)
+
+-- returns True if this ArgClause already appears in some form
+elemAC :: [[ArgClause]] -> [ArgClause] -> Bool
+elemAC [] a = False
+elemAC (c:cs) a | (c \\ a) == [] = True
+                | otherwise = elemAC cs a
+
 time :: IO t -> IO t
 time a = do
     start <- getCPUTime
@@ -537,17 +492,6 @@ time a = do
     printf "Computation time: %0.3f sec\n" (diff :: Double)
     return v
  
-main = do
-    putStrLn "Starting..."
-    time $ findRel2 rel00 (completeb backno4) (pEx4, nEx4) `seq` return ()
-    putStrLn "Done."
-
-
-main2 = do
-    putStrLn "Starting..."
-    time $ findRel2 rel6 (backno5) (pEx5, nEx5) `seq` return ()
-    putStrLn "Done."
-
 main3 = do
     putStrLn "Starting..."
     time $ findSol rel6 (completeb backno5) (pEx5, nEx5) [] `seq` return ()
@@ -556,6 +500,11 @@ main3 = do
 main4 = do
     putStrLn "Starting..."
     time $ findSol rel6 (completeb backno2) (pEx2, []) [] `seq` return ()
+    putStrLn "Done."
+
+main5 = do
+    putStrLn "Starting..."
+    time $ findSol rel8 (completeb backno8) (pEx8, (allpos3 pEx8 backno8)) [] `seq` return ()
     putStrLn "Done."
 
  
