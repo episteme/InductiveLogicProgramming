@@ -1,0 +1,36 @@
+\begin{thebibliography}{1}
+
+\bibitem{lavdzer}
+N.~Lavrac and S.~Dzeroski.
+\newblock {\em Inductive Logic Programming: Techniques and Applications}.
+\newblock Ellis Horwood, New York, 1991.
+
+\bibitem{focl}
+C.~A.~Brunk M.~J.~Pazzani and G.~Silverstein.
+\newblock A knowledge-intensive approach to relational concept learning.
+\newblock {\em Proceedings of the Eighth International Workshop on Machine
+  Learning, pp. 432-436}, 1991.
+
+\bibitem{mugg}
+S.~Muggleton.
+\newblock Inductive logic programming.
+\newblock {\em New Generation Computing}, 8(4), 1991.
+
+\bibitem{golem}
+S.~Muggleton and C.~Feng.
+\newblock Efficient induction of logic programs.
+\newblock {\em Proceedings of the First Conference on Algorithmic Learning
+  Theory}, 1990.
+
+\bibitem{foil}
+J.~R. Quinlan.
+\newblock Learning logical definitions from relations.
+\newblock {\em Machine Learning, 5:239-266}, 1990.
+
+\bibitem{lrp}
+B.~L. Richards and R.~J. Mooney.
+\newblock Learning relations by pathfinding.
+\newblock {\em Appears in Proceedings of the Tenth National Conference on
+  Artificial Intelligence (AAAI-92), pp.50-55, San Jose, CA}, 1992.
+
+\end{thebibliography}
