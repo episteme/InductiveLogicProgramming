@@ -381,7 +381,9 @@ allpos3 :: [Clause] -> BackKnow -> BackKnow
 allpos3 c@(d:ds) b = [(False, (snd3 d), p) | p <- f] \\ (switchallc c) where
                         f = allpos (fromIntegral $ length $ thd3 d) b
 
-
+allpos4 :: [Clause] -> BackKnow -> BackKnow
+allpos4 c@(d:ds) b = [(True, (snd3 d), p) | p <- f] \\ c where
+                        f = allpos (fromIntegral $ length $ thd3 d) b
 showb :: BackKnow -> [Char]
 showb [] = []
 showb (x:xs) = (show (fst3 x)) ++ " " ++ (snd3 x) ++ (show (thd3 x)) ++ "\n" ++ (showb xs)

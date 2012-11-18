@@ -128,6 +128,56 @@ and variables increase it very quickly starts to take a lot longer to check that
 a relation covers the examples, which is yet another reason why we want to
 limit the amount of possibilities that are generated as potential clauses.
 
+\section*{Implemented Example}
+
+To get a clearer understanding of the system I present the following simple example.
+
+\begin{verbatim}
+backno = [(True, "parent", ["ann", "mary"]), 
+            (True, "parent", ["ann", "tom"]),
+            (True, "parent", ["tom", "eve"]),
+            (True, "parent", ["tom", "ian"]),
+            (True, "female", ["ann"]),
+            (True, "female", ["mary"]),
+            (True, "female", ["eve"])]
+
+pEx = [(True, "daughter", ["mary", "ann"]),
+        (True, "daughter", ["eve", "tom"])]
+\end{verbatim}
+
+If we take backno as the set of facts that represent the background knowledge 
+and pEx to be the set of observed facts about the relation we want to define.
+Starting with the empty relation:
+
+\begin{verbatim}
+rel = ((True, "daughter", [1,2]), [])
+\end{verbatim}
+
+Representing the most general relation possible, that True entails daughter(1,2).
+In this example we will assume no negative observations are given, meaning we must 
+generate all the possible negative examples, of which there are 23 but I wont list 
+them here. Since this starting relation is valid for all the positive examples as 
+well as the negative examples, we must start the search because we want to find the 
+relation which covers no negative examples.
+
+Every clauses that uses up to 3 variables is generated, we then filter these to find 
+the clauses which cover the positive examples, leaving the following set:
+
+\begin{verbatim}
+[[(True,"parent",[2,1])],[(True,"parent",[2,3])],[(True,"female",[1])]]
+\end{verbatim}
+
+Since none of these cover none of the negative examples the search continues, conjoining 
+clauses with each member of this set until a relation is found that covers all the positive 
+examples and none of the negatives. The relation found in more human readable format is:
+
+Daughter(1,2) \leftarrow Female(1) AND Parent(2,1)
+
+As expected this example runs very quickly, in a matter if milliseconds, but it should give
+a clear view of the goals of the system.
+
+\section{Moving Forward}
+
 At the moment I am using family trees as a domain for testing, as it provides
 human readable examples and it is easy to check if the system discovers the
 real world relation. So far the system can very quickly find hypothesis
@@ -153,16 +203,19 @@ that can possibly result in correct answers. A family tree example with 14
 people only using facts that relate siblings and parents could have 20 positive
 facts and over 400 negated facts, showing just how difficult it is to find a
 correct solution with limited information and how important it is that the
-system is as efficient as possible. Using an example of this size there are
-
-Almost 10 different possible hypothesis for the uncle relation that are
+system is as efficient as possible. Using an example of this size there are 
+almost 10 different possible hypothesis for the uncle relation that are
 logically correct, but obviously only 1 of them is the real world definition.
 
 Moving forward with the project I will work on refining the work I have already
-done and extending it to be able to deal with negated examples. Once I am
+done and extending it to be able to deal with negated clauses. Once I am
 convinced that the system works as intended it will be able to test its
-efficiency on examples of different sizes and see what sort of relations it can
-discover in reasonable time.
+efficiency on examples of different sizes and improve the complexity of relations
+it can discover in reasonable time.
+
+Next term I will also work on structuring my code in more intelligent and concise ways,
+using resources such as Hoogle (http://www.haskell.org/hoogle/) to write more succinct
+functions and seperate my work in to logic sections.
 
 \bibliographystyle{plain}
 \bibliography{progbib}
