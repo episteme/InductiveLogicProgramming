@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>~/ILP/main.hs.html</title>
+<meta name="Generator" content="Vim/7.2">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body bgcolor="#121212" text="#d0d0d0"><font face="monospace">
+<font color="#5fd7ff">type</font>&nbsp;Literal&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">[</font>Char<font color="#ff6060">]</font><br>
+<br>
+<font color="#5fd7ff">type</font>&nbsp;Clause&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">(</font><font color="#c00000">[</font>Char<font color="#c00000">]</font>,&nbsp;<font color="#c00000">[</font>Literal<font color="#c00000">]</font><font color="#ff6060">)</font><br>
+<br>
+<font color="#5fd7ff">type</font>&nbsp;Arg&nbsp;<font color="#d7005f">=</font>&nbsp;Integer<br>
+<br>
+<font color="#5fd7ff">type</font>&nbsp;ArgClause&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">(</font><font color="#c00000">[</font>Char<font color="#c00000">]</font>,&nbsp;<font color="#c00000">[</font>Arg<font color="#c00000">]</font><font color="#ff6060">)</font><br>
+<br>
+<font color="#5fd7ff">type</font>&nbsp;Relation&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">(</font>ArgClause,&nbsp;<font color="#c00000">[</font>ArgClause<font color="#c00000">]</font><font color="#ff6060">)</font><br>
+<br>
+<font color="#5fd7ff">type</font>&nbsp;Examples&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">(</font>PosEx,&nbsp;NegEx<font color="#ff6060">)</font><br>
+<br>
+<font color="#5fd7ff">type</font>&nbsp;PosEx&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">[</font>Clause<font color="#ff6060">]</font><br>
+<br>
+<font color="#5fd7ff">type</font>&nbsp;NegEx&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">[</font>Clause<font color="#ff6060">]</font><br>
+<br>
+<font color="#5fd7ff">type</font>&nbsp;BackKnow&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">[</font>Clause<font color="#ff6060">]</font><br>
+<br>
+<font color="#5fd7ff">type</font>&nbsp;VarMap&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">[</font><font color="#c00000">(</font>Integer,&nbsp;Literal<font color="#c00000">)</font><font color="#ff6060">]</font><br>
+<br>
+backno&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">[</font><font color="#c00000">(</font><font color="#afaf87">&quot;parent&quot;</font>,&nbsp;<font color="#008080">[</font><font color="#afaf87">&quot;ann&quot;</font>,&nbsp;<font color="#afaf87">&quot;mary&quot;</font><font color="#008080">]</font><font color="#c00000">)</font>,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#c00000">(</font><font color="#afaf87">&quot;parent&quot;</font>,&nbsp;<font color="#008080">[</font><font color="#afaf87">&quot;ann&quot;</font>,&nbsp;<font color="#afaf87">&quot;tom&quot;</font><font color="#008080">]</font><font color="#c00000">)</font>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#c00000">(</font><font color="#afaf87">&quot;parent&quot;</font>,&nbsp;<font color="#008080">[</font><font color="#afaf87">&quot;tom&quot;</font>,&nbsp;<font color="#afaf87">&quot;eve&quot;</font><font color="#008080">]</font><font color="#c00000">)</font>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#c00000">(</font><font color="#afaf87">&quot;parent&quot;</font>,&nbsp;<font color="#008080">[</font><font color="#afaf87">&quot;tom&quot;</font>,&nbsp;<font color="#afaf87">&quot;ian&quot;</font><font color="#008080">]</font><font color="#c00000">)</font>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#c00000">(</font><font color="#afaf87">&quot;female&quot;</font>,&nbsp;<font color="#008080">[</font><font color="#afaf87">&quot;ann&quot;</font><font color="#008080">]</font><font color="#c00000">)</font>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#c00000">(</font><font color="#afaf87">&quot;female&quot;</font>,&nbsp;<font color="#008080">[</font><font color="#afaf87">&quot;mary&quot;</font><font color="#008080">]</font><font color="#c00000">)</font>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#c00000">(</font><font color="#afaf87">&quot;female&quot;</font>,&nbsp;<font color="#008080">[</font><font color="#afaf87">&quot;eve&quot;</font><font color="#008080">]</font><font color="#c00000">)</font><font color="#ff6060">]</font><br>
+<br>
+pEx&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">[</font><font color="#c00000">(</font><font color="#afaf87">&quot;daughter&quot;</font>,&nbsp;<font color="#008080">[</font><font color="#afaf87">&quot;mary&quot;</font>,&nbsp;<font color="#afaf87">&quot;ann&quot;</font><font color="#008080">]</font><font color="#c00000">)</font>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <font color="#c00000">(</font><font color="#afaf87">&quot;daughter&quot;</font>,&nbsp;<font color="#008080">[</font><font color="#afaf87">&quot;eve&quot;</font>,&nbsp;<font color="#afaf87">&quot;tom&quot;</font><font color="#008080">]</font><font color="#c00000">)</font><font color="#ff6060">]</font><br>
+<br>
+nEx&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">[</font><font color="#c00000">(</font><font color="#afaf87">&quot;daughter&quot;</font>,&nbsp;<font color="#008080">[</font><font color="#afaf87">&quot;tom&quot;</font>,&nbsp;<font color="#afaf87">&quot;ann&quot;</font><font color="#008080">]</font><font color="#c00000">)</font>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <font color="#c00000">(</font><font color="#afaf87">&quot;daughter&quot;</font>,&nbsp;<font color="#008080">[</font><font color="#afaf87">&quot;eve&quot;</font>,&nbsp;<font color="#afaf87">&quot;ann&quot;</font><font color="#008080">]</font><font color="#c00000">)</font><font color="#ff6060">]</font><br>
+<br>
+rel&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">(</font><font color="#c00000">(</font><font color="#afaf87">&quot;daughter&quot;</font>,&nbsp;<font color="#008080">[</font><font color="#af5fff">1</font>,&nbsp;<font color="#af5fff">2</font><font color="#008080">]</font><font color="#c00000">)</font>,&nbsp;<font color="#c00000">[</font><font color="#008080">(</font><font color="#afaf87">&quot;female&quot;</font>,&nbsp;<font color="#008000">[</font><font color="#af5fff">1</font><font color="#008000">]</font><font color="#008080">)</font>,&nbsp;<font color="#008080">(</font><font color="#afaf87">&quot;parent&quot;</font>,&nbsp;<font color="#008000">[</font><font color="#af5fff">2</font>,&nbsp;<font color="#af5fff">1</font><font color="#008000">]</font><font color="#008080">)</font><font color="#c00000">]</font><font color="#ff6060">)</font><br>
+rel2&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">(</font><font color="#c00000">(</font><font color="#afaf87">&quot;daugther&quot;</font>,&nbsp;<font color="#008080">[</font><font color="#af5fff">1</font>,&nbsp;<font color="#af5fff">2</font><font color="#008080">]</font><font color="#c00000">)</font>,&nbsp;<font color="#c00000">[</font><font color="#008080">(</font><font color="#afaf87">&quot;female&quot;</font>,&nbsp;<font color="#008000">[</font><font color="#af5fff">1</font><font color="#008000">]</font><font color="#008080">)</font><font color="#c00000">]</font><font color="#ff6060">)</font><br>
+<br>
+<font color="#5f5f5f">-- Returns true if relation covers all positive examples and none of the negative</font><br>
+<font color="#5f5f5f">-- examples</font><br>
+covers&nbsp;<font color="#d7005f">::</font>&nbsp;Relation&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;BackKnow&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;Examples&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;Bool<br>
+covers&nbsp;_&nbsp;_&nbsp;<font color="#ff6060">(</font><font color="#c00000">[]</font>,&nbsp;_<font color="#ff6060">)</font>&nbsp;<font color="#d7005f">=</font>&nbsp;True<br>
+covers&nbsp;r&nbsp;b&nbsp;<font color="#ff6060">(</font>x,&nbsp;<font color="#c00000">(</font>n<font color="#d7005f">:</font>ns<font color="#c00000">)</font><font color="#ff6060">)</font>&nbsp;<font color="#d7005f">|</font>&nbsp;allIn&nbsp;b&nbsp;<font color="#ff6060">(</font>arg2cla&nbsp;r&nbsp;n<font color="#ff6060">)</font>&nbsp;<font color="#d7005f">==</font>&nbsp;False&nbsp;<font color="#d7005f">=</font>&nbsp;covers&nbsp;r&nbsp;b&nbsp;<font color="#ff6060">(</font>x,&nbsp;ns<font color="#ff6060">)</font><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <font color="#d7005f">|</font>&nbsp;otherwise&nbsp;<font color="#d7005f">=</font>&nbsp;False<br>
+covers&nbsp;r&nbsp;b&nbsp;<font color="#ff6060">(</font><font color="#c00000">(</font>e<font color="#d7005f">:</font>es<font color="#c00000">)</font>,&nbsp;<font color="#c00000">[]</font><font color="#ff6060">)</font>&nbsp;<font color="#d7005f">|</font>&nbsp;allIn&nbsp;b&nbsp;<font color="#ff6060">(</font>arg2cla&nbsp;r&nbsp;e<font color="#ff6060">)</font>&nbsp;<font color="#d7005f">=</font>&nbsp;covers&nbsp;r&nbsp;b&nbsp;<font color="#ff6060">(</font>es,&nbsp;<font color="#c00000">[]</font><font color="#ff6060">)</font><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#d7005f">|</font>&nbsp;otherwise&nbsp;<font color="#d7005f">=</font>&nbsp;False<br>
+<br>
+<font color="#5f5f5f">-- allIn x y returns True if y is a subset of x</font><br>
+allIn&nbsp;<font color="#d7005f">::</font>&nbsp;<font color="#ff6060">(</font>Eq&nbsp;a<font color="#ff6060">)</font>&nbsp;<font color="#d7005f">=&gt;</font>&nbsp;<font color="#ff6060">[</font>a<font color="#ff6060">]</font>&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;<font color="#ff6060">[</font>a<font color="#ff6060">]</font>&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;Bool<br>
+allIn&nbsp;b&nbsp;<font color="#ff6060">[]</font>&nbsp;<font color="#d7005f">=</font>&nbsp;True<br>
+allIn&nbsp;b&nbsp;<font color="#ff6060">(</font>x<font color="#d7005f">:</font>xs<font color="#ff6060">)</font>&nbsp;<font color="#d7005f">|</font>&nbsp;x&nbsp;<font color="#d7005f">`elem`</font>&nbsp;b&nbsp;<font color="#d7005f">=</font>&nbsp;allIn&nbsp;b&nbsp;xs<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <font color="#d7005f">|</font>&nbsp;otherwise&nbsp;<font color="#d7005f">=</font>&nbsp;False<br>
+<br>
+<font color="#5f5f5f">-- Returns a mapping of indices to literals&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font><br>
+vMap&nbsp;<font color="#d7005f">::</font>&nbsp;Relation&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;Clause&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;VarMap<br>
+vMap&nbsp;r&nbsp;c&nbsp;<font color="#d7005f">=</font>&nbsp;zip&nbsp;<font color="#ff6060">(</font>snd&nbsp;<font color="#c00000">(</font>fst&nbsp;rel<font color="#c00000">)</font><font color="#ff6060">)</font>&nbsp;<font color="#ff6060">(</font>snd&nbsp;c<font color="#ff6060">)</font><br>
+<br>
+<font color="#5f5f5f">-- Finds the literal for a given index in a varmap</font><br>
+getLit&nbsp;<font color="#d7005f">::</font>&nbsp;VarMap&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;Integer&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;Literal<br>
+getLit&nbsp;<font color="#ff6060">(</font>v<font color="#d7005f">:</font>vs<font color="#ff6060">)</font>&nbsp;i&nbsp;<font color="#d7005f">|</font>&nbsp;<font color="#ff6060">(</font>fst&nbsp;v<font color="#ff6060">)</font>&nbsp;<font color="#d7005f">==</font>&nbsp;i&nbsp;<font color="#d7005f">=</font>&nbsp;snd&nbsp;v<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#d7005f">|</font>&nbsp;otherwise&nbsp;<font color="#d7005f">=</font>&nbsp;getLit&nbsp;vs&nbsp;i<br>
+<br>
+<font color="#5f5f5f">-- Transforms a 'conjunction' of arg clauses to real clauses</font><br>
+arg2cla&nbsp;<font color="#d7005f">::</font>&nbsp;Relation&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;Clause&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;<font color="#ff6060">[</font>Clause<font color="#ff6060">]</font><br>
+arg2cla&nbsp;r&nbsp;c&nbsp;<font color="#d7005f">=</font>&nbsp;arg2cla_&nbsp;<font color="#ff6060">(</font>snd&nbsp;r<font color="#ff6060">)</font>&nbsp;c&nbsp;<font color="#ff6060">[]</font>&nbsp;<font color="#5fd7ff">where</font><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;arg2cla_&nbsp;<font color="#ff6060">[]</font>&nbsp;c&nbsp;s&nbsp;<font color="#d7005f">=</font>&nbsp;s<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;arg2cla_&nbsp;<font color="#ff6060">(</font>r2<font color="#d7005f">:</font>rs<font color="#ff6060">)</font>&nbsp;c&nbsp;s&nbsp;<font color="#d7005f">=</font>&nbsp;arg2cla_&nbsp;rs&nbsp;c&nbsp;<font color="#ff6060">(</font><font color="#c00000">(</font>useVMap&nbsp;<font color="#008080">(</font>vMap&nbsp;r&nbsp;c<font color="#008080">)</font>&nbsp;r2<font color="#c00000">)</font><font color="#d7005f">:</font>s<font color="#ff6060">)</font><br>
+<br>
+<font color="#5f5f5f">-- Utility function for arg2cla</font><br>
+useVMap&nbsp;<font color="#d7005f">::</font>&nbsp;VarMap&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;ArgClause&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;Clause<br>
+useVMap&nbsp;v&nbsp;a&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">(</font><font color="#c00000">(</font>fst&nbsp;a<font color="#c00000">)</font>,&nbsp;<font color="#c00000">(</font>useVMap2&nbsp;v&nbsp;<font color="#008080">(</font>snd&nbsp;a<font color="#008080">)</font><font color="#c00000">)</font><font color="#ff6060">)</font><br>
+<br>
+<font color="#5f5f5f">-- Utility function for arg2cla</font><br>
+useVMap2&nbsp;<font color="#d7005f">::</font>&nbsp;VarMap&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;<font color="#ff6060">[</font>Integer<font color="#ff6060">]</font>&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;<font color="#ff6060">[</font>Literal<font color="#ff6060">]</font><br>
+useVMap2&nbsp;v&nbsp;i&nbsp;<font color="#d7005f">=</font>&nbsp;useVMap_&nbsp;v&nbsp;i&nbsp;<font color="#ff6060">[]</font>&nbsp;<font color="#5fd7ff">where</font><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;useVMap_&nbsp;v&nbsp;<font color="#ff6060">[]</font>&nbsp;s&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">(</font>reverse&nbsp;s<font color="#ff6060">)</font><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;useVMap_&nbsp;v&nbsp;<font color="#ff6060">(</font>i<font color="#d7005f">:</font>ix<font color="#ff6060">)</font>&nbsp;s&nbsp;<font color="#d7005f">=</font>&nbsp;useVMap_&nbsp;v&nbsp;ix&nbsp;<font color="#ff6060">(</font><font color="#c00000">(</font>getLit&nbsp;v&nbsp;i<font color="#c00000">)</font><font color="#d7005f">:</font>s<font color="#ff6060">)</font><br>
+<br>
+<font color="#5f5f5f">-- Returns the list of literals used in the background knowledge</font><br>
+listLits&nbsp;<font color="#d7005f">::</font>&nbsp;BackKnow&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;<font color="#ff6060">[</font>Literal<font color="#ff6060">]</font><br>
+listLits&nbsp;<font color="#ff6060">[]</font>&nbsp;<font color="#d7005f">=</font>&nbsp;<font color="#ff6060">[]</font><br>
+listLits&nbsp;b&nbsp;<font color="#d7005f">=</font>&nbsp;listLits2&nbsp;b&nbsp;<font color="#ff6060">[]</font>&nbsp;<font color="#5fd7ff">where</font><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;listLits2&nbsp;<font color="#ff6060">[]</font>&nbsp;s&nbsp;<font color="#d7005f">=</font>&nbsp;s<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;listLits2&nbsp;<font color="#ff6060">(</font>x<font color="#d7005f">:</font>xs<font color="#ff6060">)</font>&nbsp;s&nbsp;<font color="#d7005f">=</font>&nbsp;listLits2&nbsp;xs&nbsp;<font color="#ff6060">(</font>addSet&nbsp;<font color="#c00000">(</font>snd&nbsp;x<font color="#c00000">)</font>&nbsp;s<font color="#ff6060">)</font><br>
+<br>
+addSet&nbsp;<font color="#d7005f">::</font>&nbsp;<font color="#ff6060">(</font>Eq&nbsp;a<font color="#ff6060">)</font>&nbsp;<font color="#d7005f">=&gt;</font>&nbsp;<font color="#ff6060">[</font>a<font color="#ff6060">]</font>&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;<font color="#ff6060">[</font>a<font color="#ff6060">]</font>&nbsp;<font color="#d7005f">-&gt;</font>&nbsp;<font color="#ff6060">[</font>a<font color="#ff6060">]</font><br>
+addSet&nbsp;<font color="#ff6060">[]</font>&nbsp;y&nbsp;<font color="#d7005f">=</font>&nbsp;y<br>
+addSet&nbsp;<font color="#ff6060">(</font>x<font color="#d7005f">:</font>xs<font color="#ff6060">)</font>&nbsp;y&nbsp;<font color="#d7005f">|</font>&nbsp;x&nbsp;<font color="#d7005f">`elem`</font>&nbsp;y&nbsp;<font color="#d7005f">=</font>&nbsp;addSet&nbsp;xs&nbsp;y<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#d7005f">|</font>&nbsp;otherwise&nbsp;<font color="#d7005f">=</font>&nbsp;addSet&nbsp;xs&nbsp;<font color="#ff6060">(</font>x<font color="#d7005f">:</font>y<font color="#ff6060">)</font><br>
+<br>
+<br>
+</font></body>
+</html>
