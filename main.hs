@@ -2,9 +2,12 @@ import Debug.Trace
 import Data.List
 
 import Text.Printf
-import Control.Exception
 import System.CPUTime
 
+
+import System.Environment
+import System.IO
+import System.IO.Error
 
 type Literal = [Char]
 
@@ -350,7 +353,6 @@ listLits b = listLits2 b [] where
               listLits2 [] s = s
               listLits2 (x:xs) s = listLits2 xs (addSet (thd3 x) s)
 
--- hoogle this
 -- Utility function for listLits
 addSet :: (Eq a) => [a] -> [a] -> [a]
 addSet [] y = y
@@ -485,6 +487,81 @@ elemAC [] a = False
 elemAC (c:cs) a | (c \\ a) == [] = True
                 | otherwise = elemAC cs a
 
+--
+-- START of getting target relation block
+--
+-- Transform relation string into argclause (Bool, String, [Int])
+relFromStr :: String -> ArgClause
+relFromStr s | (validTarget s) = (True, head t, nums)
+             | otherwise = error ("Input Error: Invalid target relation: " ++ s)
+                where 
+                  t = words s
+                  nums = intsFromStr (t !! 1)
+
+-- Returns True if string can be used in relFromStr
+validTarget :: String -> Bool
+validTarget s | (length t) < 2 = False -- Target has two parts
+              | numeric (t !! 1) = True -- Second part must be a number
+              | otherwise = False
+                where
+                  t = words s
+                  numeric [] = True
+                  numeric (x:xs) | x `elem` ['0'..'9'] = numeric xs
+                                 | otherwise = False
+
+-- Make a list of numbers from 1 up to and including given string
+intsFromStr :: String -> [Integer]
+intsFromStr s = [1..y] where y = read s::Integer
+--
+-- END of getting target relation block
+-- 
+
+--
+-- START of getting background knowledge block
+--
+-- Transform a list of strings into a set of clauses
+backFromStrs :: [String] -> [Clause]
+backFromStrs [] = []
+backFromStrs (x:xs) = (backFromStr x) : (backFromStrs xs)
+
+-- Transforms a single string into a clause
+backFromStr :: String -> Clause
+backFromStr s | validClause s = doBackFromStr s
+              | otherwise = 
+                  error ("Input Error: Invalid Background Knowledge: " ++ s)
+
+-- This is where the work is done for backFromStr
+doBackFromStr :: String -> Clause
+doBackFromStr (x:xs) = (chrToBool x, (head t), (tail t))
+                        where
+                          t = words xs
+                          chrToBool '+' = True
+                          chrToBool '-' = False
+
+-- Returns True if string is a valid clause
+validClause :: String -> Bool
+validClause s | (length t) < 3 = False -- Clause has 3 parts
+              | not ((head t) `elem` ["+","-"]) = False -- First part must be +/-
+              | otherwise = True
+                where
+                  t = words s
+
+-- Returns True if this set of clauses is valid
+-- validClauses :: [Clause] -> Bool
+-- validClauses [] = True
+-- validClauses 
+
+--
+-- END of getting background knowledge block
+--
+
+doit :: String -> IO ()
+doit file = do
+  -- Preprocessing
+  contents <- readFile file
+  putStrLn $ show $ relFromStr $ head $ lines contents
+
+
 time :: IO t -> IO t
 time a = do
     start <- getCPUTime
@@ -509,4 +586,4 @@ main5 = do
     time $ findSol rel8 (completeb backno8) (pEx8, (allpos3 pEx8 backno8)) [] `seq` return ()
     putStrLn "Done."
 
- 
+  
