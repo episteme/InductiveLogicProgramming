@@ -208,7 +208,6 @@ nEx8 = [(True, "uncle", ["bob", "james"])]
 rel8 = ((True, "uncle", [1, 2]), [])
 rel9 = ((True, "uncle", [1, 2]), [(True, "parent", [3, 2]), (True, "sibling", [3, 1]), (True, "male", [1])])
 
-
 rel = ((True, "daughter", [1, 2]), [(True, "female", [1]), (True, "parent", [2, 1])])
 rel2 = ((True, "daugther", [1, 2]), [(True, "female", [1])])
 rel3 = ((True, "cousin", [1, 2]), [(True, "parent", [3, 1]), (True, "sibling", [3,4]),
@@ -490,6 +489,10 @@ elemAC (c:cs) a | (c \\ a) == [] = True
 --
 -- START of getting target relation block
 --
+-- Returns the relation represented by the first line in the parsed file
+targetFromFile :: String -> Relation
+targetFromFile x = (relFromStr (head (lines x)), [])
+ 
 -- Transform relation string into argclause (Bool, String, [Int])
 relFromStr :: String -> ArgClause
 relFromStr s | (validTarget s) = (True, head t, nums)
@@ -519,6 +522,10 @@ intsFromStr s = [1..y] where y = read s::Integer
 --
 -- START of getting background knowledge block
 --
+-- Gets the background knowledge that is contained within this file
+backnoFromFile :: String -> [Clause]
+backnoFromFile s = backFromStrs $ takeWhile (\a -> a /= "") (tail $ tail $ lines s)
+
 -- Transform a list of strings into a set of clauses
 backFromStrs :: [String] -> [Clause]
 backFromStrs [] = []
@@ -547,19 +554,60 @@ validClause s | (length t) < 3 = False -- Clause has 3 parts
                   t = words s
 
 -- Returns True if this set of clauses is valid
--- validClauses :: [Clause] -> Bool
--- validClauses [] = True
--- validClauses 
+validClauses :: [Clause] -> Bool
+validClauses a = vClauses a a
+
+-- This is where the work is done with validClauses
+vClauses :: [Clause] -> [Clause] -> Bool
+vClauses a [] = True
+vClauses a (x:xs) | (clauseInfo x) `elem` backInfo a = vClauses a xs
+                  | otherwise = False
+
+-- Convert a clause into it's name and number of arguments
+clauseInfo :: Clause -> ([Char], Integer)
+clauseInfo c = ((snd3 c), (fromIntegral $ length (thd3 c)))
 
 --
 -- END of getting background knowledge block
 --
+--
+-- START of getting positive examples block
+--
+examplesFromFile :: String -> [Clause]
+examplesFromFile s = backFromStrs t
+                      where
+                        t = tail $ dropWhile f (tail $ dropWhile f (lines s))
+                        f a = a /= ""
+
+--
+-- END of getting positive examples block
+--
+
+
+solveFile :: String -> [Relation]
+solveFile s = findSol a b (c, (allpos4 c b)) []
+                where
+                  a = targetFromFile s
+                  b = completeb $ backnoFromFile s
+                  c = examplesFromFile s
+
 
 doit :: String -> IO ()
 doit file = do
   -- Preprocessing
   contents <- readFile file
-  putStrLn $ show $ relFromStr $ head $ lines contents
+  putStrLn $ "Target Relation: "
+  putStrLn $ show $ targetFromFile contents
+  putStrLn $ "Background Knowledge: "
+  putStrLn $ show $ backnoFromFile contents
+  putStrLn $ "Postive Examples: "
+  putStrLn $ show $ examplesFromFile contents
+
+  putStrLn $ show $ allpos4 (examplesFromFile contents) (backnoFromFile contents)
+
+  putStrLn $ "Begin computation"
+  putStrLn $ show $ solveFile contents
+  
 
 
 time :: IO t -> IO t
