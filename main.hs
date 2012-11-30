@@ -29,6 +29,10 @@ type BackKnow = [Clause]
 
 type VarMap = [(Integer, Literal)]
 
+type TrainEx = [[Char]]
+
+type TrainSet = ([TrainEx],[TrainEx])
+
 backno = [(True, "parent", ["ann", "mary"]), 
             (True, "parent", ["ann", "tom"]),
             (True, "parent", ["tom", "eve"]),
@@ -267,6 +271,11 @@ coversposc2 r b [] i = i
 coversposc2 r b (c:cs) i | tryVMaps (possMaps b r c) r b c == False = coversposc2 r b cs i
                          | otherwise = coversposc2 r b cs (i+1)
 
+uncovered :: Relation -> BackKnow -> [Clause] -> [Clause]
+uncovered _ _ [] = []
+uncovered r b (c:cs) | tryVMaps (possMaps b r c) r b c == True = uncovered r b cs
+                      | otherwise = (c : (uncovered r b cs))
+
 coversnegc :: Relation -> BackKnow -> [Clause] -> Int
 coversnegc r b [] = 0
 coversnegc r b (c:cs) | tryVMaps (possMaps b r c) r b c == True = (coversnegc r b cs) + 1
@@ -431,16 +440,23 @@ hScore r b cs c = coversnegc (conj r c) b cs
 useargs2 :: Relation -> BackKnow -> [Clause] -> [[ArgClause]]
 useargs2 r b p = [[x] | x <- useargs r b, coverspos (conj r x) b p]
 
+useargs3 :: Relation -> BackKnow -> [Clause] -> [[ArgClause]]
+useargs3 r b p = [[x] | x <- useargs r b]
+
+
 
 mergeAC :: [[ArgClause]] -> Relation -> BackKnow -> Examples -> [[ArgClause]]
-mergeAC ac1 r b e@(p,n) = uniqueACs [(x ++ y) | x <- ac1, y <- (useargs2 ((fst r), x) b p), not (irrelevantC ((fst r), x) ((fst r), (x ++ y)) b e), coverspos ((fst r), (x ++ y)) b p, not ((head y) `elem` x)]
+mergeAC ac1 r b e@(p,n) = uniqueACs [(x ++ y) | x <- ac1, y <- (useargs3 ((fst r), x) b p), not (irrelevantC ((fst r), x) ((fst r), (x ++ y)) b e), coverspos ((fst r), (x ++ y)) b p, not ((head y) `elem` x)]
 --mergeAC ac1 r b e@(p,n) = uniqueACs [(x ++ y) | x <- ac1, y <- (useargs2 ((fst r), x) b p), coverspos ((fst r), (x ++ y)) b p, not ((head y) `elem` x)]
 
-findSol :: Relation -> BackKnow -> Examples -> [[ArgClause]] -> [Relation]
-findSol r b e@(p,n) [] = findSol r b e (useargs2 r b p)
-findSol r b e@(p,n) a | trace (show a) findAC a r b e == [] = findSol r b e (mergeAC a r b e)
+--findSol :: Relation -> BackKnow -> Examples -> [[ArgClause]] -> [Relation]
+--findSol r b e@(p,n) [] = findSol (conj r (head $ head t)) b e t
+  --                       where t = bestGain r b e []
+--findSol r b e@(p,n) a | trace (show a) findAC a r b e == [] = findSol (conj r (head $ head t)) b e t
+--findSol r b e@(p,n) a | trace (show a) findAC a r b e == [] = findSol r b e (mergeAC a r b e)
 --findSol r b e@(p,n) a | findAC a r b e == [] = findSol r b e (mergeAC a r b e)
-                      | otherwise = (findAC a r b e)
+ --                     | otherwise = (findAC a r b e)
+   --                      where t = bestGain r b e (mergeAC a r b e)
 
 findAC :: [[ArgClause]] -> Relation -> BackKnow -> Examples -> [Relation]
 findAC [] r b e = []
@@ -579,17 +595,90 @@ examplesFromFile s = backFromStrs t
                         t = tail $ dropWhile f (tail $ dropWhile f (lines s))
                         f a = a /= ""
 
+-- Returns the training examples from a file
+trainFromFile :: String -> [TrainEx]
+trainFromFile s = map trainFromLine (exampleStrs s)
+
+-- Returns the set of strings that represent examples
+exampleStrs :: String -> [String]
+exampleStrs s = tail $ dropWhile (\a -> a /= "") (drop 2 w)
+                 where w = lines s
+
+-- Returns the traning example from a line
+trainFromLine :: String -> TrainEx
+trainFromLine s = drop 2 (words s)
+
+
+
 --
 -- END of getting positive examples block
 --
+--
+-- START of search block
+--
+-- Returns the entropy of the given examples
+entropy :: Floating a => Examples -> a
+entropy (a, b) = ent (length a) (length b)
+
+-- Returns the entropy of 2 Ints - used in entropy
+ent :: Floating a => Int -> Int -> a
+ent a b = - logBase 2 (x / y)
+            where
+              x = fromIntegral a
+              y = x + (fromIntegral b)
 
 
-solveFile :: String -> [Relation]
-solveFile s = findSol a b (c, (allpos4 c b)) []
-                where
-                  a = targetFromFile s
-                  b = completeb $ backnoFromFile s
-                  c = examplesFromFile s
+gain :: Floating a => Relation -> BackKnow -> Examples -> ArgClause -> a
+gain r b (p, n) a | x2 == 0 = 0
+                  | otherwise = t
+                    where
+                     t = (fromIntegral x2) * ((ent x y) - (ent x2 y2))
+                     x = coversposc r b p
+                     y = coversnegc r b n
+                     x2 = coversposc (conj r a) b p
+                     y2 = coversnegc (conj r a) b n
+
+listGains :: Relation -> BackKnow -> Examples -> [ArgClause] -> [ArgClause]
+listGains r b (p, n) a = filter f a
+                          where
+                            f x = (gain r b (p, n) x) > 0
+
+-- Returns the arg clause that would cause the highest information gain
+bestGain :: Relation -> BackKnow -> Examples -> [ArgClause] -> ArgClause
+bestGain r b (p, n) (x:xs) = bestGain2 r b (p, n) xs (i, x) where i = gain r b (p, n) x
+ 
+bestGain2 :: (Ord a, Floating a) => Relation -> BackKnow -> Examples -> [ArgClause] -> (a, ArgClause) -> ArgClause
+bestGain2 r b e [] (i, bs) = bs
+bestGain2 r b e (x:xs) (i, bs) | (trace ((show t) ++ " " ++ (show x))) t > i = bestGain2 r b e xs (t, x)
+                               | otherwise = bestGain2 r b e xs (i, bs)
+                                 where t = gain r b e x
+
+improve :: Relation -> BackKnow -> Examples -> Relation
+improve r b (p, n) | (trace (show r)) n == [] = r
+                   | otherwise = improve r1 b1 (p1, n1) where
+                      (r1, b1, (p1, n1)) = improveR (r, b, (p, n))
+
+improveR :: (Relation, BackKnow, Examples) -> (Relation, BackKnow, Examples)
+improveR (r, b, (p, n)) = (r1, b, (p1, n1)) 
+                        where
+                          r1 = conj r (bestGain r b (p, n) (useargs r b))
+                          p1 = coverset r1 b p
+                          n1 = coverset r1 b n
+
+
+
+--
+-- END of search block
+--
+
+
+--
+--solveFile :: String -> [Relation]
+--solveFile s = findSol a b (c, (allpos4 c b)) []
+--                where
+--                  a = targetFromFile s
+--                  b = completeb $ backnoFromFile s
+--                  c = examplesFromFile s
 
 
 doit :: String -> IO ()
@@ -599,14 +688,14 @@ doit file = do
   putStrLn $ "Target Relation: "
   putStrLn $ show $ targetFromFile contents
   putStrLn $ "Background Knowledge: "
-  putStrLn $ show $ backnoFromFile contents
+  putStrLn $ showb $ backnoFromFile contents
   putStrLn $ "Postive Examples: "
-  putStrLn $ show $ examplesFromFile contents
-
-  putStrLn $ show $ allpos4 (examplesFromFile contents) (backnoFromFile contents)
+  putStrLn $ showb $ examplesFromFile contents
+  putStrLn $ "Negative Examples using CWA: "
+  putStrLn $ showb $ allpos4 (examplesFromFile contents) (backnoFromFile contents)
 
   putStrLn $ "Begin computation"
-  putStrLn $ show $ solveFile contents
+  putStrLn $ show $ improve (targetFromFile contents) (completeb $ backnoFromFile contents) ((examplesFromFile contents), allpos4 (examplesFromFile contents) (completeb $ backnoFromFile contents))
   
 
 
@@ -621,17 +710,17 @@ time a = do
  
 main3 = do
     putStrLn "Starting..."
-    time $ findSol rel6 (completeb backno5) (pEx5, nEx5) [] `seq` return ()
+    --time $ findSol rel6 (completeb backno5) (pEx5, nEx5) [] `seq` return ()
     putStrLn "Done."
 
 main4 = do
     putStrLn "Starting..."
-    time $ findSol rel6 (completeb backno2) (pEx2, []) [] `seq` return ()
+    --time $ findSol rel6 (completeb backno2) (pEx2, []) [] `seq` return ()
     putStrLn "Done."
 
 main5 = do
     putStrLn "Starting..."
-    time $ findSol rel8 (completeb backno8) (pEx8, (allpos3 pEx8 backno8)) [] `seq` return ()
+    --time $ findSol rel8 (completeb backno8) (pEx8, (allpos3 pEx8 backno8)) [] `seq` return ()
     putStrLn "Done."
 
   
