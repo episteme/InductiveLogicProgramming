@@ -1,0 +1,25 @@
+uncle 2
+
++ parent bob laura
++ sibling laura james
++ sibling james laura
++ parent jane james
++ sibling jane mike
++ sibling mike jane
++ parent mike bruce
++ parent sarah bruce
++ parent bob james
++ parent jane laura
++ sibling jim bob
++ sibling bob jim
++ sibling may bob
++ male jim bob
++ male bob
++ male james
++ male mike
++ male bruce
+
++ uncle mike james
++ uncle mike laura
++ uncle jim laura
++ uncle jim james

@@ -1,0 +1,12 @@
+daughter 2
+
++ parent ann mary
++ parent ann tom
++ parent tom eve
++ parent tom ian
++ female ann
++ female mary
++ female eve
+
++ daughter mary ann
++ daughter eve tom
