@@ -357,9 +357,7 @@ getLit (v:vs) i | (fst v) == i = snd v
 -- Returns the list of literals used in the background knowledge
 listLits :: BackKnow -> [Literal]
 listLits [] = []
-listLits b = listLits2 b [] where
-              listLits2 [] s = s
-              listLits2 (x:xs) s = listLits2 xs (addSet (thd3 x) s)
+listLits b = nub (foldl (++) [] (map thd3 b))
 
 -- Utility function for listLits
 addSet :: (Eq a) => [a] -> [a] -> [a]
@@ -646,24 +644,74 @@ listGains r b (p, n) a = filter f a
 -- Returns the arg clause that would cause the highest information gain
 bestGain :: Relation -> BackKnow -> Examples -> [ArgClause] -> ArgClause
 bestGain r b (p, n) (x:xs) = bestGain2 r b (p, n) xs (i, x) where i = gain r b (p, n) x
- 
+
+-- if multiple with same score, picks one with least variables
+-- if multiple with same score and no new variables, keeps first
 bestGain2 :: (Ord a, Floating a) => Relation -> BackKnow -> Examples -> [ArgClause] -> (a, ArgClause) -> ArgClause
 bestGain2 r b e [] (i, bs) = bs
-bestGain2 r b e (x:xs) (i, bs) | (trace ((show t) ++ " " ++ (show x))) t > i = bestGain2 r b e xs (t, x)
+--bestGain2 r b e (x:xs) (i, bs) | (trace ((show t) ++ " " ++ (show x))) t > i = bestGain2 r b e xs (t, x)
+bestGain2 r b e (x:xs) (i, bs) | t > i = bestGain2 r b e xs (t, x)
+                               | t == i = bestGain2 r b e xs (t, y)
                                | otherwise = bestGain2 r b e xs (i, bs)
-                                 where t = gain r b e x
+                                 where
+                                   t = gain r b e x
+                                   y = leastNewVars x bs
+
+bestGains :: Relation -> BackKnow -> Examples -> [ArgClause] -> [ArgClause]
+bestGains r b e as =  bestArgs $ listScores r b e as
+
+listScores :: (Ord a, Floating a) => Relation -> BackKnow -> Examples -> [ArgClause] -> [(a, ArgClause)]
+listScores r b e bs = map f bs where
+                        -- f x = (trace ((show x) ++ " " ++ (show (gain r b e x)))) ((gain r b e x), x)
+                        f x = ((gain r b e x), x)
+
+
+maxScore :: (Ord a) => [(a, ArgClause)] -> a
+maxScore c = maximum $ map fst c
+                                   
+maxArgs :: (Ord a) => [(a, ArgClause)] -> [ArgClause]
+maxArgs c = map snd $ filter (\x -> (fst x) == (maxScore c)) c
+
+leastNewVarScore :: [ArgClause] -> Integer
+leastNewVarScore a = minimum $ map (\x -> maximum (thd3 x)) a
+
+bestArgs :: (Ord a) => [(a, ArgClause)] -> [ArgClause]
+bestArgs a = filter (\x -> (maximum (thd3 x)) == (leastNewVarScore t)) t
+              where t = maxArgs a
+
+-- returns the argclause that introduces the least variables
+leastNewVars :: ArgClause -> ArgClause -> ArgClause
+leastNewVars a b | y > x = a
+                 | otherwise = b
+                  where
+                   y = maximum (thd3 b)
+                   x = maximum (thd3 a)
 
 improve :: Relation -> BackKnow -> Examples -> Relation
 improve r b (p, n) | (trace (show r)) n == [] = r
                    | otherwise = improve r1 b1 (p1, n1) where
                       (r1, b1, (p1, n1)) = improveR (r, b, (p, n))
 
+
+improve2 :: ([Relation], BackKnow, Examples) -> [Relation]
+improve2 ([], _, _) = []
+--improve2 ((r:rs), b, (p, n)) | (trace (show r)) n == [] = r : (improve2 (rs, b, (p, n)))
+improve2 ((r:rs), b, (p, n)) | n == [] = r : (improve2 (rs, b, (p, n)))
+                             | otherwise = (foldl (++) [] (map improve2 (improveR2 (r, b, (p, n)))) ++ (improve2 (rs, b, (p,n))))
+
+
+
+improveR2 :: (Relation, BackKnow, Examples) -> [([Relation], BackKnow, Examples)]
+improveR2 (r, b, (p, n)) = [([r1], b, ((coverset r1 b p), (coverset r1 b n))) | r1 <- rs]
+                        where
+                          rs = [(conj r x) | x <- (bestGains r b (p, n) (useargs r b))]
+
 improveR :: (Relation, BackKnow, Examples) -> (Relation, BackKnow, Examples)
 improveR (r, b, (p, n)) = (r1, b, (p1, n1)) 
                         where
                           r1 = conj r (bestGain r b (p, n) (useargs r b))
-                          p1 = coverset r1 b p
                           n1 = coverset r1 b n
+                          p1 = coverset r1 b p
 
 
 
@@ -672,13 +720,13 @@ improveR (r, b, (p, n)) = (r1, b, (p1, n1))
 --
 
 
---
---solveFile :: String -> [Relation]
---solveFile s = findSol a b (c, (allpos4 c b)) []
---                where
---                  a = targetFromFile s
---                  b = completeb $ backnoFromFile s
---                  c = examplesFromFile s
+solveFile :: String -> [Relation]
+solveFile s = improve2 ([a], b, (c, (allpos4 c b)))
+                where
+                  a = targetFromFile s
+                  b = completeb $ backnoFromFile s
+                  c = examplesFromFile s
+
 
 
 doit :: String -> IO ()
@@ -695,8 +743,11 @@ doit file = do
   putStrLn $ showb $ allpos4 (examplesFromFile contents) (backnoFromFile contents)
 
   putStrLn $ "Begin computation"
-  putStrLn $ show $ improve (targetFromFile contents) (completeb $ backnoFromFile contents) ((examplesFromFile contents), allpos4 (examplesFromFile contents) (completeb $ backnoFromFile contents))
-  
+  putStrLn $ show $ improve2 ([(targetFromFile contents)], (completeb $ backnoFromFile contents), ((examplesFromFile contents), allpos4 (examplesFromFile contents) (completeb $ backnoFromFile contents)))
+
+main = do
+  r <- readFile "family.txt"
+  print (solveFile r)
 
 
 time :: IO t -> IO t
