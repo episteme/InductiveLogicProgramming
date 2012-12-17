@@ -664,7 +664,7 @@ bestGains r b e as =  bestArgs $ listScores r b e as
 
 listScores :: (Ord a, Floating a) => Relation -> BackKnow -> Examples -> [ArgClause] -> [(a, ArgClause)]
 listScores r b e bs = map f bs where
-                        -- f x = (trace ((show x) ++ " " ++ (show (gain r b e x)))) ((gain r b e x), x)
+                        --f x = (trace ((show x) ++ " " ++ (show (gain r b e x)))) ((gain r b e x), x)
                         f x = ((gain r b e x), x)
 
 

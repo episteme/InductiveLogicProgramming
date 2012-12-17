@@ -244,8 +244,8 @@ getOutVars :: Relation -> [Integer]
 getOutVars r = nub $ concat $ map thd3 (snd r)
 
 -- utility for p4, messy: needs restructure and rename
-p2 :: BackKnow -> Integer -> VarMap -> [VarMap]
-p2 b i vm = p3 [(i,y) | y <- (listLits b), not (y `elem` (map snd vm))] vm [] where
+p2 :: BackKnow -> [Literal] -> Integer -> VarMap -> [VarMap]
+p2 b l i vm = p3 [(i,y) | y <- l, not (y `elem` (map snd vm))] vm [] where
             p3 :: [(Integer, Literal)] -> VarMap -> [VarMap] -> [VarMap]
             p3 [] v s = s
             p3 (x:xs) v s = p3 xs v ((v ++ [x]):s)
@@ -253,44 +253,39 @@ p2 b i vm = p3 [(i,y) | y <- (listLits b), not (y `elem` (map snd vm))] vm [] wh
 -- Idea is to take a list of unbound variables in the form of integers and return
 -- all the possible mappings of these integers to literals
 -- cant believe i figured this out, needs restructure and rename
-p4 :: BackKnow -> [Integer] -> [VarMap] -> [VarMap]
-p4 b [] y = y
-p4 b (x:xs) y = p4 b xs (foldr (++) [] (map (p2 b x) y))
+p4 :: BackKnow -> [Literal] -> [Integer] -> [VarMap] -> [VarMap]
+p4 b l [] y = y
+p4 b l (x:xs) y = p4 b l xs (foldr (++) [] (map (p2 b l x) y))
 
 -- does this relation cover the positive examples?
-coverspos :: Relation -> BackKnow -> [Clause] -> Bool
-coverspos r b [] = True
-coverspos r b (c:cs) | tryVMaps (possMaps b r c) r b c == False = False
-                     | otherwise = coverspos r b cs
+coverspos :: Relation -> BackKnow -> [Literal] -> [Clause] -> Bool
+coverspos r b l [] = True
+coverspos r b l (c:cs) | tryVMaps (possMaps b l r c) r b c == False = False
+                       | otherwise = coverspos r b l cs
 
-coversposc :: Relation -> BackKnow -> [Clause] -> Int
-coversposc r b x = coversposc2 r b x 0
+coversposc :: Relation -> BackKnow -> [Literal] -> [Clause] -> Int
+coversposc r b l x = coversposc2 r b l x 0
 
-coversposc2 :: Relation -> BackKnow -> [Clause] -> Int -> Int
-coversposc2 r b [] i = i
-coversposc2 r b (c:cs) i | tryVMaps (possMaps b r c) r b c == False = coversposc2 r b cs i
-                         | otherwise = coversposc2 r b cs (i+1)
+coversposc2 :: Relation -> BackKnow -> [Literal] -> [Clause] -> Int -> Int
+coversposc2 r b l [] i = i
+coversposc2 r b l (c:cs) i | tryVMaps (possMaps b l r c) r b c == False = coversposc2 r b l cs i
+                           | otherwise = coversposc2 r b l cs (i+1)
 
-uncovered :: Relation -> BackKnow -> [Clause] -> [Clause]
-uncovered _ _ [] = []
-uncovered r b (c:cs) | tryVMaps (possMaps b r c) r b c == True = uncovered r b cs
-                      | otherwise = (c : (uncovered r b cs))
+uncovered :: Relation -> BackKnow -> [Literal] -> [Clause] -> [Clause]
+uncovered _ _ _ [] = []
+uncovered r b l (c:cs) | tryVMaps (possMaps b l r c) r b c == True = uncovered r b l cs
+                      | otherwise = (c : (uncovered r b l cs))
 
-coversnegc :: Relation -> BackKnow -> [Clause] -> Int
-coversnegc r b [] = 0
-coversnegc r b (c:cs) | tryVMaps (possMaps b r c) r b c == True = (coversnegc r b cs) + 1
-                      | otherwise = coversnegc r b cs
+coversnegc :: Relation -> BackKnow -> [Literal] -> [Clause] -> Int
+coversnegc r b l [] = 0
+coversnegc r b l (c:cs) | tryVMaps (possMaps b l r c) r b c == True = (coversnegc r b l cs) + 1
+                      | otherwise = coversnegc r b l cs
 
 -- does this relation cover no negative examples?
-coversnoneg :: Relation -> BackKnow -> [Clause] -> Bool
-coversnoneg r b [] = True
-coversnoneg r b (c:cs) | tryVMaps (possMaps b r c) r b c == True = False
-                       | otherwise = coversnoneg r b cs
-
-coversamenegset :: Relation -> Relation -> BackKnow -> [Clause] -> Bool
-coversamenegset r1 r2 b [] = True
-coversamenegset r1 r2 b (x:xs) | tryVMaps (possMaps b r1 x) r1 b x == tryVMaps (possMaps b r2 x) r2 b x = coversamenegset r1 r2 b xs
-                               | otherwise = False
+coversnoneg :: Relation -> BackKnow -> [Literal] -> [Clause] -> Bool
+coversnoneg r b l [] = True
+coversnoneg r b l (c:cs) | tryVMaps (possMaps b l r c) r b c == True = False
+                         | otherwise = coversnoneg r b l cs
 
 -- returns True if x is a subset of y
 subsetC :: [Clause] -> [Clause] -> Bool
@@ -298,19 +293,19 @@ subsetC [] _ = True
 subsetC (c:cs) d | c `elem` d = subsetC cs d
                  | otherwise = False
 
-coverset :: Relation -> BackKnow -> [Clause] -> [Clause]
-coverset r b n = filter (\a -> tryVMaps (possMaps b r a) r b a) n
+coverset :: Relation -> BackKnow -> [Literal] -> [Clause] -> [Clause]
+coverset r b l n = filter (\a -> tryVMaps (possMaps b l r a) r b a) n
 
 -- irrelevant r1 r2: r2 has extra clause
-irrelevantC :: Relation -> Relation -> BackKnow -> Examples -> Bool
-irrelevantC r1 r2 b e@(p,n) = (subsetC (coverset r1 b n) (coverset r2 b n))
+irrelevantC :: Relation -> Relation -> [Literal] -> BackKnow -> Examples -> Bool
+irrelevantC r1 r2 l b e@(p,n) = (subsetC (coverset r1 b l n) (coverset r2 b l n))
 
-covers :: Relation -> BackKnow -> Examples -> Bool
-covers r b (p, n) = and [(coverspos r b p), (coversnoneg r b n)]
+covers :: Relation -> BackKnow -> [Literal] -> Examples -> Bool
+covers r b l (p, n) = and [(coverspos r b l p), (coversnoneg r b l n)]
 
-possMaps :: BackKnow -> Relation -> Clause -> [VarMap]
-possMaps b r c | diff == [] = vm
-                   | otherwise = p4 b diff vm
+possMaps :: BackKnow -> [Literal] -> Relation -> Clause -> [VarMap]
+possMaps b l r c | diff == [] = vm
+                   | otherwise = p4 b l diff vm
                    where diff = (getOutVars r) \\ (getInVars r)
                          vm = [zip (getInVars r) (thd3 c)]
 
@@ -357,7 +352,9 @@ getLit (v:vs) i | (fst v) == i = snd v
 -- Returns the list of literals used in the background knowledge
 listLits :: BackKnow -> [Literal]
 listLits [] = []
-listLits b = nub (foldl (++) [] (map thd3 b))
+listLits b = listLits2 b [] where
+              listLits2 [] s = s
+              listLits2 (x:xs) s = listLits2 xs (addSet (thd3 x) s)
 
 -- Utility function for listLits
 addSet :: (Eq a) => [a] -> [a] -> [a]
@@ -431,20 +428,20 @@ combt :: a -> (b, c) -> (a, b, c)
 combt x (y, z) = (x, y, z)
 
 -- how many negative examples does this cover?
-hScore :: Relation -> BackKnow -> [Clause] -> ArgClause -> Int
-hScore r b cs c = coversnegc (conj r c) b cs
+hScore :: Relation -> BackKnow -> [Literal] -> [Clause] -> ArgClause -> Int
+hScore r b l cs c = coversnegc (conj r c) b l cs
 
 -- need to generate every useful argclause
-useargs2 :: Relation -> BackKnow -> [Clause] -> [[ArgClause]]
-useargs2 r b p = [[x] | x <- useargs r b, coverspos (conj r x) b p]
+useargs2 :: Relation -> BackKnow -> [Literal] -> [Clause] -> [[ArgClause]]
+useargs2 r b l p = [[x] | x <- useargs r b, coverspos (conj r x) b l p]
 
-useargs3 :: Relation -> BackKnow -> [Clause] -> [[ArgClause]]
-useargs3 r b p = [[x] | x <- useargs r b]
+useargs3 :: Relation -> BackKnow -> [Literal] -> [Clause] -> [[ArgClause]]
+useargs3 r b l p = [[x] | x <- useargs r b]
 
 
 
-mergeAC :: [[ArgClause]] -> Relation -> BackKnow -> Examples -> [[ArgClause]]
-mergeAC ac1 r b e@(p,n) = uniqueACs [(x ++ y) | x <- ac1, y <- (useargs3 ((fst r), x) b p), not (irrelevantC ((fst r), x) ((fst r), (x ++ y)) b e), coverspos ((fst r), (x ++ y)) b p, not ((head y) `elem` x)]
+mergeAC :: [[ArgClause]] -> Relation -> BackKnow -> [Literal] -> Examples -> [[ArgClause]]
+mergeAC ac1 r b l e@(p,n) = uniqueACs [(x ++ y) | x <- ac1, y <- (useargs3 ((fst r), x) b l p), not (irrelevantC ((fst r), x) ((fst r), (x ++ y)) l b e), coverspos ((fst r), (x ++ y)) b l p, not ((head y) `elem` x)]
 --mergeAC ac1 r b e@(p,n) = uniqueACs [(x ++ y) | x <- ac1, y <- (useargs2 ((fst r), x) b p), coverspos ((fst r), (x ++ y)) b p, not ((head y) `elem` x)]
 
 --findSol :: Relation -> BackKnow -> Examples -> [[ArgClause]] -> [Relation]
@@ -456,10 +453,10 @@ mergeAC ac1 r b e@(p,n) = uniqueACs [(x ++ y) | x <- ac1, y <- (useargs3 ((fst r
  --                     | otherwise = (findAC a r b e)
    --                      where t = bestGain r b e (mergeAC a r b e)
 
-findAC :: [[ArgClause]] -> Relation -> BackKnow -> Examples -> [Relation]
-findAC [] r b e = []
-findAC (x:xs) r b e | covers ((fst r), x) b e = ((fst r), x):(findAC xs r b e)
-                    | otherwise = findAC xs r b e
+findAC :: [[ArgClause]] -> Relation -> BackKnow -> [Literal] -> Examples -> [Relation]
+findAC [] r b l e = []
+findAC (x:xs) r b l e | covers ((fst r), x) b l e = ((fst r), x):(findAC xs r b l e)
+                      | otherwise = findAC xs r b l e
 
 showrs :: [Relation] -> String
 showrs [] = ""
@@ -626,44 +623,44 @@ ent a b = - logBase 2 (x / y)
               y = x + (fromIntegral b)
 
 
-gain :: Floating a => Relation -> BackKnow -> Examples -> ArgClause -> a
-gain r b (p, n) a | x2 == 0 = 0
-                  | otherwise = t
-                    where
-                     t = (fromIntegral x2) * ((ent x y) - (ent x2 y2))
-                     x = coversposc r b p
-                     y = coversnegc r b n
-                     x2 = coversposc (conj r a) b p
-                     y2 = coversnegc (conj r a) b n
+gain :: Floating a => Relation -> BackKnow -> Examples -> [Literal] -> ArgClause -> a
+gain r b (p, n) l a | x2 == 0 = 0
+                    | otherwise = t
+                      where
+                       t = (fromIntegral x2) * ((ent x y) - (ent x2 y2))
+                       x = coversposc r b l p
+                       y = coversnegc r b l n
+                       x2 = coversposc (conj r a) b l p
+                       y2 = coversnegc (conj r a) b l n
 
-listGains :: Relation -> BackKnow -> Examples -> [ArgClause] -> [ArgClause]
-listGains r b (p, n) a = filter f a
-                          where
-                            f x = (gain r b (p, n) x) > 0
+listGains :: Relation -> BackKnow -> Examples -> [Literal] -> [ArgClause] -> [ArgClause]
+listGains r b (p, n) l a = filter f a
+                            where
+                              f x = (gain r b (p, n) l x) > 0
 
 -- Returns the arg clause that would cause the highest information gain
-bestGain :: Relation -> BackKnow -> Examples -> [ArgClause] -> ArgClause
-bestGain r b (p, n) (x:xs) = bestGain2 r b (p, n) xs (i, x) where i = gain r b (p, n) x
+bestGain :: Relation -> BackKnow -> [Literal] -> Examples -> [ArgClause] -> ArgClause
+bestGain r b l (p, n) (x:xs) = bestGain2 r b l (p, n) xs (i, x) where i = gain r b (p, n) l x
 
 -- if multiple with same score, picks one with least variables
 -- if multiple with same score and no new variables, keeps first
-bestGain2 :: (Ord a, Floating a) => Relation -> BackKnow -> Examples -> [ArgClause] -> (a, ArgClause) -> ArgClause
-bestGain2 r b e [] (i, bs) = bs
+bestGain2 :: (Ord a, Floating a) => Relation -> BackKnow -> [Literal] -> Examples -> [ArgClause] -> (a, ArgClause) -> ArgClause
+bestGain2 r b l e [] (i, bs) = bs
 --bestGain2 r b e (x:xs) (i, bs) | (trace ((show t) ++ " " ++ (show x))) t > i = bestGain2 r b e xs (t, x)
-bestGain2 r b e (x:xs) (i, bs) | t > i = bestGain2 r b e xs (t, x)
-                               | t == i = bestGain2 r b e xs (t, y)
-                               | otherwise = bestGain2 r b e xs (i, bs)
-                                 where
-                                   t = gain r b e x
-                                   y = leastNewVars x bs
+bestGain2 r b l e (x:xs) (i, bs) | t > i = bestGain2 r b l e xs (t, x)
+                                 | t == i = bestGain2 r b l e xs (t, y)
+                                 | otherwise = bestGain2 r b l e xs (i, bs)
+                                   where
+                                     t = gain r b e l x
+                                     y = leastNewVars x bs
 
-bestGains :: Relation -> BackKnow -> Examples -> [ArgClause] -> [ArgClause]
-bestGains r b e as =  bestArgs $ listScores r b e as
+bestGains :: Relation -> BackKnow -> [Literal] -> Examples -> [ArgClause] -> [ArgClause]
+bestGains r b l e as =  bestArgs $ listScores r b l e as
 
-listScores :: (Ord a, Floating a) => Relation -> BackKnow -> Examples -> [ArgClause] -> [(a, ArgClause)]
-listScores r b e bs = map f bs where
-                        -- f x = (trace ((show x) ++ " " ++ (show (gain r b e x)))) ((gain r b e x), x)
-                        f x = ((gain r b e x), x)
+listScores :: (Ord a, Floating a) => Relation -> BackKnow -> [Literal] -> Examples -> [ArgClause] -> [(a, ArgClause)]
+listScores r b l e bs = map f bs where
+                        --f x = (trace ((show x) ++ " " ++ (show (gain r b e x)))) ((gain r b e x), x)
+                        f x = ((gain r b e l x), x)
 
 
 maxScore :: (Ord a) => [(a, ArgClause)] -> a
@@ -687,31 +684,31 @@ leastNewVars a b | y > x = a
                    y = maximum (thd3 b)
                    x = maximum (thd3 a)
 
-improve :: Relation -> BackKnow -> Examples -> Relation
-improve r b (p, n) | (trace (show r)) n == [] = r
-                   | otherwise = improve r1 b1 (p1, n1) where
-                      (r1, b1, (p1, n1)) = improveR (r, b, (p, n))
+improve :: Relation -> BackKnow -> [Literal] -> Examples -> Relation
+improve r b l (p, n) | (trace (show r)) n == [] = r
+                     | otherwise = improve r1 b1 l (p1, n1) where
+                        (r1, b1, (p1, n1), l) = improveR (r, b, (p, n), l)
 
 
-improve2 :: ([Relation], BackKnow, Examples) -> [Relation]
-improve2 ([], _, _) = []
+improve2 :: ([Relation], BackKnow, Examples, [Literal]) -> [Relation]
+improve2 ([], _, _, _) = []
 --improve2 ((r:rs), b, (p, n)) | (trace (show r)) n == [] = r : (improve2 (rs, b, (p, n)))
-improve2 ((r:rs), b, (p, n)) | n == [] = r : (improve2 (rs, b, (p, n)))
-                             | otherwise = (foldl (++) [] (map improve2 (improveR2 (r, b, (p, n)))) ++ (improve2 (rs, b, (p,n))))
+improve2 ((r:rs), b, (p, n), l) | n == [] = r : (improve2 (rs, b, (p, n), l))
+                                | otherwise = (foldl (++) [] (map improve2 (improveR2 (r, b, (p, n), l))) ++ (improve2 (rs, b, (p,n), l)))
 
 
 
-improveR2 :: (Relation, BackKnow, Examples) -> [([Relation], BackKnow, Examples)]
-improveR2 (r, b, (p, n)) = [([r1], b, ((coverset r1 b p), (coverset r1 b n))) | r1 <- rs]
-                        where
-                          rs = [(conj r x) | x <- (bestGains r b (p, n) (useargs r b))]
+improveR2 :: (Relation, BackKnow, Examples, [Literal]) -> [([Relation], BackKnow, Examples, [Literal])]
+improveR2 (r, b, (p, n), l) = [([r1], b, ((coverset r1 b l p), (coverset r1 b l n)), l) | r1 <- rs]
+                              where
+                                rs = [(conj r x) | x <- (bestGains r b l (p, n) (useargs r b))]
 
-improveR :: (Relation, BackKnow, Examples) -> (Relation, BackKnow, Examples)
-improveR (r, b, (p, n)) = (r1, b, (p1, n1)) 
-                        where
-                          r1 = conj r (bestGain r b (p, n) (useargs r b))
-                          n1 = coverset r1 b n
-                          p1 = coverset r1 b p
+improveR :: (Relation, BackKnow, Examples, [Literal]) -> (Relation, BackKnow, Examples, [Literal])
+improveR (r, b, (p, n), l) = (r1, b, (p1, n1), l) 
+                            where
+                              r1 = conj r (bestGain r b l (p, n) (useargs r b))
+                              n1 = coverset r1 b l n
+                              p1 = coverset r1 b l p
 
 
 
@@ -721,11 +718,12 @@ improveR (r, b, (p, n)) = (r1, b, (p1, n1))
 
 
 solveFile :: String -> [Relation]
-solveFile s = improve2 ([a], b, (c, (allpos4 c b)))
+solveFile s = improve2 ([a], b, (c, (allpos4 c b)), d)
                 where
                   a = targetFromFile s
                   b = completeb $ backnoFromFile s
                   c = examplesFromFile s
+                  d = listLits b
 
 
 
@@ -742,8 +740,9 @@ doit file = do
   putStrLn $ "Negative Examples using CWA: "
   putStrLn $ showb $ allpos4 (examplesFromFile contents) (backnoFromFile contents)
 
+  putStrLn $ show $ listLits (backnoFromFile contents)
   putStrLn $ "Begin computation"
-  putStrLn $ show $ improve2 ([(targetFromFile contents)], (completeb $ backnoFromFile contents), ((examplesFromFile contents), allpos4 (examplesFromFile contents) (completeb $ backnoFromFile contents)))
+  putStrLn $ show $ solveFile contents
 
 main = do
   r <- readFile "family.txt"
