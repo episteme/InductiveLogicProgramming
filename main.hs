@@ -13,7 +13,7 @@ type Literal = [Char]
 
 type Clause = (Bool, [Char], [Literal])
 
-type Arg = Integer
+type Arg = Int
 
 type ArgClause = (Bool, [Char], [Arg])
 
@@ -27,7 +27,7 @@ type NegEx = [Clause]
 
 type BackKnow = [Clause]
 
-type VarMap = [(Integer, Literal)]
+type VarMap = [(Int, Literal)]
 
 type TrainEx = [[Char]]
 
@@ -236,24 +236,24 @@ thd3 :: (a, b, c) -> c
 thd3 (_, _, x) = x
 
 -- get the set of ints used on the left of the relation
-getInVars :: Relation -> [Integer]
+getInVars :: Relation -> [Int]
 getInVars r = nub $ thd3 $ fst r
 
 -- get the set of ints used on the right of the relation
-getOutVars :: Relation -> [Integer]
+getOutVars :: Relation -> [Int]
 getOutVars r = nub $ concat $ map thd3 (snd r)
 
 -- utility for p4, messy: needs restructure and rename
-p2 :: BackKnow -> [Literal] -> Integer -> VarMap -> [VarMap]
+p2 :: BackKnow -> [Literal] -> Int -> VarMap -> [VarMap]
 p2 b l i vm = p3 [(i,y) | y <- l, not (y `elem` (map snd vm))] vm [] where
-            p3 :: [(Integer, Literal)] -> VarMap -> [VarMap] -> [VarMap]
+            p3 :: [(Int, Literal)] -> VarMap -> [VarMap] -> [VarMap]
             p3 [] v s = s
             p3 (x:xs) v s = p3 xs v ((v ++ [x]):s)
 
 -- Idea is to take a list of unbound variables in the form of integers and return
 -- all the possible mappings of these integers to literals
 -- cant believe i figured this out, needs restructure and rename
-p4 :: BackKnow -> [Literal] -> [Integer] -> [VarMap] -> [VarMap]
+p4 :: BackKnow -> [Literal] -> [Int] -> [VarMap] -> [VarMap]
 p4 b l [] y = y
 p4 b l (x:xs) y = p4 b l xs (foldr (++) [] (map (p2 b l x) y))
 
@@ -330,7 +330,7 @@ useVMap :: VarMap -> ArgClause -> Clause
 useVMap v a = ((fst3 a), (snd3 a), (useVMap2 v (thd3 a)))
 
 -- Utility function for arg2cla
-useVMap2 :: VarMap -> [Integer] -> [Literal]
+useVMap2 :: VarMap -> [Int] -> [Literal]
 useVMap2 v i = useVMap_ v i [] where
                 useVMap_ v [] s = (reverse s)
                 useVMap_ v (i:ix) s = useVMap_ v ix ((getLit v i):s)
@@ -344,7 +344,7 @@ allIn b (x:xs) | x `elem` b = allIn b xs
                | otherwise = False
 
 -- Finds the literal for a given index in a varmap
-getLit :: VarMap -> Integer -> Literal
+getLit :: VarMap -> Int -> Literal
 getLit [] i | trace ("getLit " ++ (show i)) False = undefined
 getLit (v:vs) i | (fst v) == i = snd v
                 | otherwise = getLit vs i
@@ -362,17 +362,17 @@ addSet [] y = y
 addSet (x:xs) y | x `elem` y = addSet xs y
                 | otherwise = addSet xs (x:y)
 
-backInfo :: BackKnow -> [([Char], Integer)]
+backInfo :: BackKnow -> [([Char], Int)]
 backInfo x = nub (backInfo2 x)
 
-backInfo2 :: BackKnow -> [([Char], Integer)]
+backInfo2 :: BackKnow -> [([Char], Int)]
 backInfo2 [] = []
 backInfo2 (x:xs) = (b, (fromIntegral (length c))):(backInfo (dropWhile f xs)) where
                     b = snd3 x
                     c = thd3 x
                     f = (\a -> snd3 a == snd3 x)
 
-allpos :: Integer -> BackKnow -> [[Literal]]
+allpos :: Int -> BackKnow -> [[Literal]]
 allpos 1 b = [[x] | x <- listLits b]
 allpos n b = [x ++ [y] | x <- (allpos (n-1) b), y <- (listLits b)]
 
@@ -410,15 +410,15 @@ useargs r b = mkargcls b2 (fromIntegral (length argset) + 1) where
                 b2 = backInfo b
                 argset = nub ((getOutVars r) ++ getInVars r)
 
-numProd :: Integer -> Integer -> [[Integer]]
+numProd :: Int -> Int -> [[Int]]
 numProd i 1 = [[x] | x <- [1..i]]
 numProd i n = [x ++ [y] | x <- (numProd i (n-1)), y <- [1..i], not (y `elem` x)]
 
-mkargcls :: [([Char], Integer)] -> Integer -> [ArgClause]
+mkargcls :: [([Char], Int)] -> Int -> [ArgClause]
 mkargcls [] i = []
 mkargcls (x:xs) i = (mkargcl x i) ++ (mkargcls xs i)
 
-mkargcl :: ([Char], Integer) -> Integer -> [ArgClause]
+mkargcl :: ([Char], Int) -> Int -> [ArgClause]
 mkargcl (c, 1) j = [(combt True x) | x <- endl] ++ [(combt False x) | x <- endl] where
                     endl = zip (replicate (length (numProd (j-1) 1)) c) (numProd (j-1) 1)
 mkargcl (c, i) j = [(combt True x) | x <- endl] ++ [(combt False x) | x <- endl] where
@@ -437,8 +437,6 @@ useargs2 r b l p = [[x] | x <- useargs r b, coverspos (conj r x) b l p]
 
 useargs3 :: Relation -> BackKnow -> [Literal] -> [Clause] -> [[ArgClause]]
 useargs3 r b l p = [[x] | x <- useargs r b]
-
-
 
 mergeAC :: [[ArgClause]] -> Relation -> BackKnow -> [Literal] -> Examples -> [[ArgClause]]
 mergeAC ac1 r b l e@(p,n) = uniqueACs [(x ++ y) | x <- ac1, y <- (useargs3 ((fst r), x) b l p), not (irrelevantC ((fst r), x) ((fst r), (x ++ y)) l b e), coverspos ((fst r), (x ++ y)) b l p, not ((head y) `elem` x)]
@@ -524,8 +522,8 @@ validTarget s | (length t) < 2 = False -- Target has two parts
                                  | otherwise = False
 
 -- Make a list of numbers from 1 up to and including given string
-intsFromStr :: String -> [Integer]
-intsFromStr s = [1..y] where y = read s::Integer
+intsFromStr :: String -> [Int]
+intsFromStr s = [1..y] where y = read s::Int
 --
 -- END of getting target relation block
 -- 
@@ -575,7 +573,7 @@ vClauses a (x:xs) | (clauseInfo x) `elem` backInfo a = vClauses a xs
                   | otherwise = False
 
 -- Convert a clause into it's name and number of arguments
-clauseInfo :: Clause -> ([Char], Integer)
+clauseInfo :: Clause -> ([Char], Int)
 clauseInfo c = ((snd3 c), (fromIntegral $ length (thd3 c)))
 
 --
@@ -625,22 +623,15 @@ ent a b = - logBase 2 (x / y)
 
 gain :: Floating a => Relation -> BackKnow -> Examples -> [Literal] -> ArgClause -> a
 gain r b (p, n) l a | x2 == 0 = 0
+                    | x2 < x = 0
                     | otherwise = t
                       where
-                       t = (fromIntegral x2) * ((ent x y) - (ent x2 y2))
+                       t = (trace ((show a) ++ " " ++ (show x2) ++ " " ++ (show x) ++ "/" ++ (show y) ++ " " ++ (show (ent x y)) ++ " " ++ (show x2) ++ "/" ++ (show y2) ++ " " ++ (show (ent x2 y2)))) (fromIntegral x2) * ((ent x y) - (ent x2 y2))
                        x = coversposc r b l p
                        y = coversnegc r b l n
                        x2 = coversposc (conj r a) b l p
                        y2 = coversnegc (conj r a) b l n
 
-listGains :: Relation -> BackKnow -> Examples -> [Literal] -> [ArgClause] -> [ArgClause]
-listGains r b (p, n) l a = filter f a
-                            where
-                              f x = (gain r b (p, n) l x) > 0
-
--- Returns the arg clause that would cause the highest information gain
-bestGain :: Relation -> BackKnow -> [Literal] -> Examples -> [ArgClause] -> ArgClause
-bestGain r b l (p, n) (x:xs) = bestGain2 r b l (p, n) xs (i, x) where i = gain r b (p, n) l x
 
 -- if multiple with same score, picks one with least variables
 -- if multiple with same score and no new variables, keeps first
@@ -660,16 +651,21 @@ bestGains r b l e as =  bestArgs $ listScores r b l e as
 listScores :: (Ord a, Floating a) => Relation -> BackKnow -> [Literal] -> Examples -> [ArgClause] -> [(a, ArgClause)]
 listScores r b l e bs = map f bs where
                         --f x = (trace ((show x) ++ " " ++ (show (gain r b e x)))) ((gain r b e x), x)
-                        f x = ((gain r b e l x), x)
+                        f x = (trace (show (gain r b e l x))) ((gain r b e l x), x)
 
 
+--listScores :: (Ord a, Floating a) => Relation -> BackKnow -> [Literal] -> Examples -> [ArgClause] -> [(a, ArgClause)]
+--listScores r b l e [] = []
+--listScores r b l e@(p,n) (a:as) | (trace (show (gain r b e l a))) ((coversnoneg (conj r a) b l n) == True) = ((gain r b e l a), a) : []
+ --                               | otherwise = ((gain r b e l a), a) : (listScores r b l e as)
+  
 maxScore :: (Ord a) => [(a, ArgClause)] -> a
 maxScore c = maximum $ map fst c
                                    
 maxArgs :: (Ord a) => [(a, ArgClause)] -> [ArgClause]
 maxArgs c = map snd $ filter (\x -> (fst x) == (maxScore c)) c
 
-leastNewVarScore :: [ArgClause] -> Integer
+leastNewVarScore :: [ArgClause] -> Int
 leastNewVarScore a = minimum $ map (\x -> maximum (thd3 x)) a
 
 bestArgs :: (Ord a) => [(a, ArgClause)] -> [ArgClause]
@@ -684,33 +680,16 @@ leastNewVars a b | y > x = a
                    y = maximum (thd3 b)
                    x = maximum (thd3 a)
 
-improve :: Relation -> BackKnow -> [Literal] -> Examples -> Relation
-improve r b l (p, n) | (trace (show r)) n == [] = r
-                     | otherwise = improve r1 b1 l (p1, n1) where
-                        (r1, b1, (p1, n1), l) = improveR (r, b, (p, n), l)
-
-
 improve2 :: ([Relation], BackKnow, Examples, [Literal]) -> [Relation]
 improve2 ([], _, _, _) = []
---improve2 ((r:rs), b, (p, n)) | (trace (show r)) n == [] = r : (improve2 (rs, b, (p, n)))
-improve2 ((r:rs), b, (p, n), l) | n == [] = r : (improve2 (rs, b, (p, n), l))
+improve2 ((r:rs), b, (p, n), l) | (trace (show r)) n == [] = r : (improve2 (rs, b, (p, n), l))
+--improve2 ((r:rs), b, (p, n), l) | n == [] = r : (improve2 (rs, b, (p, n), l))
                                 | otherwise = (foldl (++) [] (map improve2 (improveR2 (r, b, (p, n), l))) ++ (improve2 (rs, b, (p,n), l)))
-
-
 
 improveR2 :: (Relation, BackKnow, Examples, [Literal]) -> [([Relation], BackKnow, Examples, [Literal])]
 improveR2 (r, b, (p, n), l) = [([r1], b, ((coverset r1 b l p), (coverset r1 b l n)), l) | r1 <- rs]
                               where
                                 rs = [(conj r x) | x <- (bestGains r b l (p, n) (useargs r b))]
-
-improveR :: (Relation, BackKnow, Examples, [Literal]) -> (Relation, BackKnow, Examples, [Literal])
-improveR (r, b, (p, n), l) = (r1, b, (p1, n1), l) 
-                            where
-                              r1 = conj r (bestGain r b l (p, n) (useargs r b))
-                              n1 = coverset r1 b l n
-                              p1 = coverset r1 b l p
-
-
 
 --
 -- END of search block
@@ -725,6 +704,20 @@ solveFile s = improve2 ([a], b, (c, (allpos4 c b)), d)
                   c = examplesFromFile s
                   d = listLits b
 
+showRel :: Relation -> String
+showRel (a, b) = (showArgs [a]) ++ " is implied by " ++ (showArgs b)
+
+showArgs :: [ArgClause] -> String
+showArgs [] = ""
+showArgs ((b, s, a):[]) | b == True = (show s) ++ (show a)
+                        | otherwise = "NOT " ++ (show s) ++ (show a)
+showArgs ((b, s, a):xs) | b == True = (showit ++ " AND ") ++ (showArgs xs)
+                        | otherwise = ("NOT " ++ showit ++ " AND ") ++ (showArgs xs)
+                          where showit = (show s) ++ (show a)
+
+showRels :: [Relation] -> String
+showRels [] = ""
+showRels (x:xs) = (showRel x) ++ "\n" ++ (showRels xs)
 
 
 doit :: String -> IO ()
@@ -742,7 +735,7 @@ doit file = do
 
   putStrLn $ show $ listLits (backnoFromFile contents)
   putStrLn $ "Begin computation"
-  putStrLn $ show $ solveFile contents
+  putStrLn $ showRels $ solveFile contents
 
 main = do
   r <- readFile "family.txt"
