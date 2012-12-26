@@ -1,0 +1,163 @@
+	Sun Dec 23 23:06 2012 Time and Allocation Profiling Report  (Final)
+
+	   main3 +RTS -hc -p -RTS
+
+	total time  =       88.80 secs   (4440 ticks @ 20 ms)
+	total alloc = 722,594,360 bytes  (excludes profiling overheads)
+
+COST CENTRE                    MODULE               %time %alloc
+
+allIn                          Main                  98.8    0.0
+p2                             Main                   0.3   44.8
+useVMap2                       Main                   0.2   17.2
+useVMap                        Main                   0.2    6.9
+fst3                           Main                   0.1    2.6
+p4                             Main                   0.0    6.5
+arg2cla                        Main                   0.0   10.3
+snd3                           Main                   0.0    2.6
+possMaps                       Main                   0.0    2.1
+getOutVars                     Main                   0.0    3.0
+getInVars                      Main                   0.0    3.0
+
+
+                                                                                               individual    inherited
+COST CENTRE              MODULE                                               no.    entries  %time %alloc   %time %alloc
+
+MAIN                     MAIN                                                   1           0   0.0    0.0   100.0  100.0
+ main                    Main                                                 254           2   0.0    0.0   100.0  100.0
+  solveFile              Main                                                 256           1   0.0    0.0   100.0  100.0
+   completeb             Main                                                 272           1   0.0    0.5     0.0    0.6
+    switchallc           Main                                                 285        2259   0.0    0.0     0.0    0.0
+     switchc             Main                                                 287        2258   0.0    0.0     0.0    0.0
+    allpos2              Main                                                 273           1   0.0    0.0     0.0    0.1
+     allpos              Main                                                 281         108   0.0    0.1     0.0    0.1
+      listLits           Main                                                 282           8   0.0    0.0     0.0    0.0
+       addSet            Main                                                 284        1104   0.0    0.0     0.0    0.0
+       thd3              Main                                                 283         368   0.0    0.0     0.0    0.0
+     backInfo            Main                                                 274           9   0.0    0.0     0.0    0.0
+      backInfo2          Main                                                 275           9   0.0    0.0     0.0    0.0
+       thd3              Main                                                 277           8   0.0    0.0     0.0    0.0
+       snd3              Main                                                 276          45   0.0    0.0     0.0    0.0
+   backnoFromFile        Main                                                 270           1   0.0    0.0     0.0    0.1
+    backFromStrs         Main                                                 271          47   0.0    0.0     0.0    0.0
+     backFromStr         Main                                                 278          46   0.0    0.0     0.0    0.0
+      doBackFromStr      Main                                                 280          46   0.0    0.0     0.0    0.0
+      validClause        Main                                                 279          46   0.0    0.0     0.0    0.0
+   examplesFromFile      Main                                                 261           1   0.0    0.0     0.0    0.0
+    backFromStrs         Main                                                 262          13   0.0    0.0     0.0    0.0
+     backFromStr         Main                                                 264          12   0.0    0.0     0.0    0.0
+      doBackFromStr      Main                                                 266          12   0.0    0.0     0.0    0.0
+      validClause        Main                                                 265          12   0.0    0.0     0.0    0.0
+   allpos4               Main                                                 260           1   0.0    0.0     0.0    0.1
+    allpos               Main                                                 268          27   0.0    0.0     0.0    0.0
+     listLits            Main                                                 269           2   0.0    0.0     0.0    0.0
+      addSet             Main                                                 288       13824   0.0    0.0     0.0    0.0
+      thd3               Main                                                 286        4608   0.0    0.0     0.0    0.0
+    snd3                 Main                                                 267           0   0.0    0.0     0.0    0.0
+    thd3                 Main                                                 263           1   0.0    0.0     0.0    0.0
+   improve2              Main                                                 259           6   0.0    0.0   100.0   99.2
+    improveR2            Main                                                 289           2   0.0    0.0   100.0   99.2
+     coverset            Main                                                 361           3   0.0    0.0     2.0    1.6
+      tryVMaps           Main                                                 370       15998   0.0    0.0     1.9    0.7
+       tryVMap           Main                                                 371       15434   0.0    0.0     1.9    0.7
+        allIn            Main                                                 373       15882   1.9    0.0     1.9    0.0
+        arg2cla          Main                                                 372       15434   0.0    0.2     0.0    0.7
+         useVMap         Main                                                 374       15652   0.0    0.1     0.0    0.6
+          useVMap2       Main                                                 378       15652   0.0    0.3     0.0    0.3
+           getLit        Main                                                 379       40424   0.0    0.0     0.0    0.0
+          thd3           Main                                                 377       15652   0.0    0.0     0.0    0.0
+          fst3           Main                                                 376           0   0.0    0.1     0.0    0.1
+          snd3           Main                                                 375           0   0.0    0.1     0.0    0.1
+      possMaps           Main                                                 362         794   0.0    0.0     0.0    0.9
+       thd3              Main                                                 369           0   0.0    0.0     0.0    0.0
+       p4                Main                                                 367        1588   0.0    0.1     0.0    0.7
+        p2               Main                                                 368         794   0.0    0.6     0.0    0.6
+       getOutVars        Main                                                 365        1588   0.0    0.1     0.0    0.1
+        thd3             Main                                                 366        1012   0.0    0.0     0.0    0.0
+       getInVars         Main                                                 363        3176   0.0    0.1     0.0    0.1
+        thd3             Main                                                 364        1588   0.0    0.0     0.0    0.0
+     conj                Main                                                 360           2   0.0    0.0     0.0    0.0
+     bestGains           Main                                                 306           4   0.0    0.0    98.0   97.6
+      bestArgs           Main                                                 308           2   0.0    0.0     0.0    0.0
+       leastNewVarScore  Main                                                 358           2   0.0    0.0     0.0    0.0
+        thd3             Main                                                 359           2   0.0    0.0     0.0    0.0
+       thd3              Main                                                 357           2   0.0    0.0     0.0    0.0
+       maxArgs           Main                                                 309           4   0.0    0.0     0.0    0.0
+        maxScore         Main                                                 331           2   0.0    0.0     0.0    0.0
+      listScores         Main                                                 307           2   0.0    0.0    98.0   97.6
+       gain              Main                                                 310         144   0.0    0.0    98.0   97.6
+        coversnegc       Main                                                 338       46830   0.0    0.1    76.7   78.9
+         tryVMaps        Main                                                 343      598443   0.1    0.0    76.4   30.3
+          tryVMap        Main                                                 344      597385   0.0    0.0    76.4   30.3
+           allIn         Main                                                 346      642571  75.8    0.0    75.8    0.0
+           arg2cla       Main                                                 345      597385   0.0    7.8     0.5   30.3
+            useVMap      Main                                                 351      596937   0.1    5.3     0.5   22.5
+             useVMap2    Main                                                 355      596937   0.1   13.2     0.3   13.2
+              getLit     Main                                                 356     2433906   0.2    0.0     0.2    0.0
+             thd3        Main                                                 354      596937   0.0    0.0     0.0    0.0
+             fst3        Main                                                 353           0   0.1    2.0     0.1    2.0
+             snd3        Main                                                 352           0   0.0    2.0     0.0    2.0
+         possMaps        Main                                                 339       46692   0.0    1.9     0.3   48.6
+          thd3           Main                                                 350           0   0.0    0.1     0.0    0.1
+          p4             Main                                                 348       64994   0.0    5.0     0.2   41.1
+           p2            Main                                                 349       49807   0.2   36.1     0.2   36.1
+          getOutVars     Main                                                 342       93384   0.0    2.7     0.0    2.7
+           thd3          Main                                                 347       42966   0.0    0.0     0.0    0.0
+          getInVars      Main                                                 340      159696   0.0    2.7     0.0    2.7
+           thd3          Main                                                 341       79848   0.0    0.0     0.0    0.0
+        ent              Main                                                 336         138   0.0    0.0     0.0    0.0
+        coversposc       Main                                                 312         249   0.0    0.0    21.3   18.6
+         coversposc2     Main                                                 313        3237   0.0    0.0    21.3   18.6
+          tryVMaps       Main                                                 319      161338   0.0    0.0    21.2    8.6
+           tryVMap       Main                                                 320      160618   0.0    0.0    21.2    8.6
+            allIn        Main                                                 322      168690  21.1    0.0    21.1    0.0
+            arg2cla      Main                                                 321      160618   0.0    2.4     0.1    8.6
+             useVMap     Main                                                 323      166422   0.0    1.5     0.1    6.3
+              useVMap2   Main                                                 327      166422   0.0    3.7     0.1    3.7
+               getLit    Main                                                 328      759678   0.0    0.0     0.0    0.0
+              thd3       Main                                                 326      166422   0.0    0.0     0.0    0.0
+              fst3       Main                                                 325           0   0.0    0.6     0.0    0.6
+              snd3       Main                                                 324           0   0.0    0.6     0.0    0.6
+          possMaps       Main                                                 314        2988   0.0    0.1     0.1   10.0
+           p4            Main                                                 332        5232   0.0    1.3     0.1    9.4
+            p2           Main                                                 333        8910   0.1    8.1     0.1    8.1
+           thd3          Main                                                 329           0   0.0    0.0     0.0    0.0
+           getOutVars    Main                                                 317        5976   0.0    0.2     0.0    0.2
+            thd3         Main                                                 318        3672   0.0    0.0     0.0    0.0
+           getInVars     Main                                                 315       11016   0.0    0.2     0.0    0.2
+            thd3         Main                                                 316        5508   0.0    0.0     0.0    0.0
+        conj             Main                                                 311         213   0.0    0.0     0.0    0.0
+     useargs             Main                                                 290           2   0.0    0.0     0.0    0.0
+      getOutVars         Main                                                 297           4   0.0    0.0     0.0    0.0
+       thd3              Main                                                 380           1   0.0    0.0     0.0    0.0
+      getInVars          Main                                                 296           4   0.0    0.0     0.0    0.0
+       thd3              Main                                                 301           2   0.0    0.0     0.0    0.0
+      mkargcls           Main                                                 294          10   0.0    0.0     0.0    0.0
+       mkargcl           Main                                                 303           8   0.0    0.0     0.0    0.0
+        combt            Main                                                 305         144   0.0    0.0     0.0    0.0
+        numProd          Main                                                 304          34   0.0    0.0     0.0    0.0
+      backInfo           Main                                                 291          26   0.0    0.0     0.0    0.0
+       backInfo2         Main                                                 292          26   0.0    0.0     0.0    0.0
+        thd3             Main                                                 295          24   0.0    0.0     0.0    0.0
+        snd3             Main                                                 293        4606   0.0    0.0     0.0    0.0
+   listLits              Main                                                 258           1   0.0    0.0     0.0    0.0
+    addSet               Main                                                 335        6912   0.0    0.0     0.0    0.0
+    thd3                 Main                                                 334        2304   0.0    0.0     0.0    0.0
+   targetFromFile        Main                                                 257           1   0.0    0.0     0.0    0.0
+    relFromStr           Main                                                 298           1   0.0    0.0     0.0    0.0
+     intsFromStr         Main                                                 302           1   0.0    0.0     0.0    0.0
+     validTarget         Main                                                 299           1   0.0    0.0     0.0    0.0
+ CAF                     Main                                                 248          15   0.0    0.0     0.0    0.0
+  ent                    Main                                                 337           0   0.0    0.0     0.0    0.0
+  gain                   Main                                                 330           0   0.0    0.0     0.0    0.0
+  validTarget            Main                                                 300           0   0.0    0.0     0.0    0.0
+  main                   Main                                                 255           0   0.0    0.0     0.0    0.0
+ CAF                     Data.Typeable                                        246           2   0.0    0.0     0.0    0.0
+ CAF                     GHC.Show                                             244           1   0.0    0.0     0.0    0.0
+ CAF                     GHC.IO.Exception                                     240           4   0.0    0.0     0.0    0.0
+ CAF                     Text.Read.Lex                                        215           4   0.0    0.0     0.0    0.0
+ CAF                     GHC.IO.Handle.FD                                     185           2   0.0    0.0     0.0    0.0
+ CAF                     GHC.IO.FD                                            169           2   0.0    0.0     0.0    0.0
+ CAF                     GHC.IO.Handle.Internals                              149           1   0.0    0.0     0.0    0.0
+ CAF                     GHC.IO.Encoding.Iconv                                143           2   0.0    0.0     0.0    0.0
+ CAF                     GHC.Conc.Signal                                      140           1   0.0    0.0     0.0    0.0

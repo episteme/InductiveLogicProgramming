@@ -1,0 +1,59 @@
+arch 3
+
++ supports a b
++ supports c b
++ supports g h
++ supports i h
++ supports j k
++ supports l k
++ supports m n
++ supports r q
++ left_of a c
++ left_of d f
++ left_of g i
++ left_of j l
++ left_of m o
++ left_of p r
++ touches a b
++ touches b a
++ touches b c
++ touches c b
++ touches d e
++ touches e d
++ touches f e
++ touches e f
++ touches g h
++ touches h g
++ touches h i
++ touches i h
++ touches g i
++ touches i g
++ touches j k
++ touches k j
++ touches k l
++ touches l k
++ touches m n
++ touches n m
++ touches q r
++ touches r q
++ brick a
++ brick b
++ brick c
++ brick d
++ brick e
++ brick f
++ brick g
++ brick h
++ brick i
++ brick j
++ brick l
++ brick m
++ brick n
++ brick o
++ brick p
++ brick q
++ brick r
++ wedge k
+
++ arch a b c
++ arch j k l
