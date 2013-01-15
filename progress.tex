@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage{natbib}
 \usepackage[english]{babel}
+\usepackage[table]{xcolor}
 
 \title{Inductive Logic Programming in Haskell - Progress Report}
 \author{Marcus Peacock 0919274}
@@ -32,11 +33,11 @@ relation is false which we call the negative examples.
 As an example the background knowledge could be
 the representation of a family tree using the parent, child, male, female and sibling
 relations and we are interested in learning the definition for the new relation
-'uncle'. The background knowledge is the set of facts between literals that we
-know are true, such as: parent("dave", "jim"), sibling("joe", "dave")
-representing that "dave" is the parent of "jim" and "joe" is the sibling of
-"dave". An observation in this system might be uncle("joe", "jim"),
-    representing that "joe" is the uncle of "jim". When it comes to negative
+`uncle'. The background knowledge is the set of facts between literals that we
+know are true, such as: parent(Dave, Jim), sibling(Joe, Dave)
+representing that Dave is the parent of Jim and Joe is a sibling of
+Dave. An observation in this system might be uncle(Joe, Jim),
+    representing that Joe is the uncle of Jim. When it comes to negative
     examples there are two options; give a defined set of negative observations
     or have the system create the set of negative observations using the closed
     world assumption, that anything not observed to be true is false. The
@@ -87,7 +88,7 @@ and therefore instead of searching for a single solution within a certain
 probability threshold, I will begin by attempting to find every hypothesis that
 entails all the positive examples and none of the negatives. If a hypothesis
 is found with a certain number of clauses, there is no need to find one with
-more clauses as following the occam's razor principle we should prefer the most
+more clauses as following the Occam's razor principle we should prefer the most
 simplistic solutions. Along the same lines we can also order these hypothesis
 by the number of variables they use, since a hypothesis that holds and mentions
 fewer variables is more simple and therefore preferable.
@@ -164,24 +165,27 @@ Every clauses that uses up to 3 variables is generated, we then filter these to 
 the clauses which cover the positive examples, leaving the following set:
 
 \begin{verbatim}
-[[(True,"parent",[2,1])],[(True,"parent",[2,3])],[(True,"female",[1])]]
+[[(True,"parent",[2,1])],
+    [(True,"parent",[2,3])],
+    [(True,"female",[1])]]
 \end{verbatim}
 
 Since none of these cover none of the negative examples the search continues, conjoining 
 clauses with each member of this set until a relation is found that covers all the positive 
 examples and none of the negatives. The relation found in more human readable format is:
 
-Daughter(1,2) \leftarrow Female(1) AND Parent(2,1)
+Daughter(1,2) $\leftarrow$ Female(1) AND Parent(2,1)
 
-As expected this example runs very quickly, in a matter if milliseconds, but it should give
-a clear view of the goals of the system.
+As expected this example runs very quickly, in a matter if milliseconds, and my
+project currently functions on larger examples, but it should give ea clear view of
+the goals of the system.
 
-\section{Moving Forward}
+\section*{Moving Forward}
 
 At the moment I am using family trees as a domain for testing, as it provides
 human readable examples and it is easy to check if the system discovers the
 real world relation. So far the system can very quickly find hypothesis
-which use either none or a single 'undefined' variable, for example the
+which use either none or a single `undefined' variable, for example the
 relation mother(1,2) <- parent(1,2), female(1), where commas represent
 conjunction and uncle(1,2) <- parent(3,2), sibling(3,1). However, as the number
 of facts given as information decreases the number of valid relations that
@@ -215,7 +219,27 @@ it can discover in reasonable time.
 
 Next term I will also work on structuring my code in more intelligent and concise ways,
 using resources such as Hoogle (http://www.haskell.org/hoogle/) to write more succinct
-functions and seperate my work in to logic sections.
+functions and separate my work in to logic sections.
+
+\section*{Revised Timetable}
+
+\begin{center}
+    \begin{tabular}{|l|l|}
+    \hline
+    Date & Milestone \\
+    \hline
+    \rowcolor[gray]{0.9}
+    26th November 2012 & Progress Report \\
+    10th January 2013 & System functional with negated clauses \\
+    1st February 2013 & Suitable examples written and tested \\
+    1st March 2013 & Efficiency and readability work complete \\
+    \rowcolor[gray]{0.9}
+    4th March 2013 & Project Presentation \\
+    \rowcolor[gray]{0.9}
+    25th April 2013 & Final Report \\
+    \hline
+    \end{tabular}
+\end{center}
 
 \bibliographystyle{plain}
 \bibliography{progbib}
