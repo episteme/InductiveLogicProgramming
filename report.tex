@@ -1,0 +1,42 @@
+\documentclass{article}
+\usepackage{natbib}
+\usepackage[english]{babel}
+
+\title{Inductive Logic Programming in Haskell - Final Report}
+\author{Marcus Peacock 0919274}
+
+\begin{document}
+\maketitle
+
+\section{Inductive Logic Programming}
+
+Inductive Logic Programming (ILP) is a research area which brings together Machine Learning and Logic Programming. The aim of ILP is to derive logical hypothesis from a set of facts. Logic Programming provides a uniform representation of relevant knowledge and is thus the structure of deduced hypothesis. An Inductive Logic System is a system which utilises ILP.
+
+\section{Knowledge Representation}
+
+Before a hypothesis can be constructed, a solid framework for the representation of knowledge must be established. A hypothesis is defined as a proposed explanation for a set of observations, therefore a language for describing these observations and dually a language for describing the hypothesis needs to be selected.
+A simple structure for the description of observations uses attribute-value objects, an observation can be described as discovering the value of a specific attribute related to an object. A set of attributes are defined along with an associating set of values for each attribute. A natural example involves coin currency, one attribute for a coin might be Worth which could use the set {1, 2, 10, 20, 50, 100, 200} and another Shape with the set {Circle, Heptagon}. This establishes a basis for describing a certain coin, it may be the case that a tuple system akin to databases is selected, for example a circular coin with a value of 5 may be represented as < 5, Circle > with the system having an understanding that these values refer to the attributes Worth and Shape. Another possibility is the conjunction of observations a la [Worth = 5] /\ [Shape = Circle]. Logic programming uses the language of Horn Clauses, which represents observations as a set of ground facts, our coin could be represented as coin(5, Circle) where coin is now a predicate that takes two arguments of the form (Worth, Shape). This language allows collections of observations to be represented by conjunction and logic programming allows the introduction of variables. In the domain of hypothesis learning the concern is with discovering implications that hold given a set of ground facts, for example:
+  coin(5, Shape_1) <- Shape_1 = Circle
+This implication represents the idea that if a coin has a Worth of 5, then it will also be circular. It is implications similar to these that an Inductive Logic System is interested in learning from a set of ground facts.
+In order to maintain a consistent framework for expressions the language of logic programs is used, this language is detailed in \cite{lpakr}.
+A logic program consists of a set of rules, which in turn are constructed from atoms of the form p($t_1$,...,$t_n$) where ts are terms and p is a predicate symbol of arity n. Rules are of the form
+  $$ A_0 <- A_1,...,A_m,not A_m+1,...,not A_n $$
+where Ais are atoms and not shares the functionality of logic not. The right hand side is labelled the premise and the left the conclusion. A rule without variables involved are called ground facts.
+
+\section{Learning From Examples}
+
+Given a language of representation for facts and hypotheses, a definition for what it means for a concept or hypothesis to hold is required. Continuing with the example above, given a ground fact of coin(5, Circle) and the example hypothesis, we can say that this hypothesis covers this examples.
+For a given hypothesis, the set of positive examples is defined as the set of ground facts for which the hypothesis covers. Similar the negative examples are the examples which are not covered by the hypothesis. More formally, the problem of finding valid hypothesis can be described as follows.
+  Given a set E of examples including both positive and negative examples of a concept C, where a concept is set of ground facts were are interesed in constructing a hypothesis for, find a hypothesis H such that:
+  every positive example e in E+ is covered by H
+  no negative example in E- is covered by H
+The overall goal of an Inductive Logic System is to find a hypothesis that is complete, in that it covers all the positive examples, and consistent, in that it covers none of the negative examples. It should be noted that this may not always be possible and different systems have different ways of dealing with these situations, each system has a concept of quality which can be used to evaluate a given hypothesis. For example, quality may be defined based on the number of positive examples it covers and how few negative examples it covers or on the length of the hypothesis or combinations of chosen attiributes.
+
+\section{Language Bias}
+
+At this stage it should be recognised that the selection of the language used to represent the ground facts and hypothesis play a significant role in how the Inductive Logic System operates. Another form of bias is the way in which a system searches for a hypothesis. The selection of language is called the language bias and search method bias is called search bias.
+When designing a system, there is the option of using a less expressive hypothesis language which may reduce the search space considerably and therefore searching and learning become much quicker, however, care must be taken since a less expressive language may mean that a suitable hypothesis cannot be found whereas a system using a more expressive language could.
+\bibliographystyle{plain}
+\bibliography{reportbib.bib}
+\end{document}
+
