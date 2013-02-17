@@ -1,0 +1,68 @@
+\begin{thebibliography}{10}
+
+\bibitem{lpakr}
+Baral C. and Gelfond M.
+\newblock Logic programming and knowledge representation.
+\newblock {\em The Journal of Logic Programming, pp.73-148}, 1994.
+
+\bibitem{ass}
+Kononenko~I. Cestnik~B. and Bratko I.
+\newblock Asssistant 86: A knowledge elicitation tool for sophisticated users.
+\newblock {\em Progress in Machine Learning pp.31-45}, 1987.
+
+\bibitem{folp}
+Lloyd J.
+\newblock Foundations of logic programming.
+\newblock 1987.
+
+\bibitem{ide}
+Quinlan J.
+\newblock Induction of decision trees.
+\newblock {\em Machine Learning, pp.81-106}, 1986.
+
+\bibitem{c45}
+Quinlan J.
+\newblock C4.5: Programs for machine learning.
+\newblock 1993.
+
+\bibitem{laz}
+Cestnik~B. Lazrac~N. and Dzerski S.
+\newblock Use of heuristics in empirical inductive logic programming.
+\newblock {\em Proc. Second International Workshop on Inductive Logic
+  Programming}, 1992.
+
+\bibitem{AQ2}
+Hong~J. Michalski~R., Mozetic~I. and Lavrawc N.
+\newblock The multi-purpose incremental learning system aq15 and its testing
+  application on three medical domains.
+\newblock {\em Proc. Fifth National Conference on Artifical Intelligence,
+  pp.1041-1045}, 1986.
+
+\bibitem{mugg2}
+S.~Muggleton.
+\newblock Inductive logic programming.
+\newblock {\em Academic Press, London}, 1992.
+
+\bibitem{cn22}
+Clark P. and Boswell R.
+\newblock Rule induction with cn2: Some recent improvements.
+\newblock {\em Proc. Fifth European Working Session on Learning pp.151-163},
+  1991.
+
+\bibitem{cn2}
+Clark P. and Niblett T.
+\newblock Induction in noisy domains.
+\newblock {\em Progress in Machine Learning pp.11-30}, 1987.
+
+\bibitem{AQ1}
+Michalski R.
+\newblock A theory and methodology of inductive learning.
+\newblock {\em Machine Learning: An Artificial Intelligence Approach,
+  pp.83-134}, 1983.
+
+\bibitem{mugg}
+Muggleton S.
+\newblock Inductive logic programming.
+\newblock {\em New Generation Computing, pp.295-318}, 1991.
+
+\end{thebibliography}
